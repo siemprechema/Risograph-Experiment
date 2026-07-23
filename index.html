@@ -38,37 +38,42 @@
             font-weight: 800;
         }
 
+        /* Panel UI Comprimido (25% más pequeño) */
         #ui-panel {
             position: absolute;
             top: 50%;
             left: 20px;
             transform: translateY(-50%);
             background: var(--paper-bg);
-            padding: 16px;
-            width: 210px;
+            padding: 12px;
+            width: 200px;
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
-            max-height: 95vh;
+            max-height: 75vh; /* Altura máxima reducida */
             overflow-y: auto;
         }
 
+        #ui-panel::-webkit-scrollbar { width: 4px; }
+        #ui-panel::-webkit-scrollbar-track { background: transparent; }
+        #ui-panel::-webkit-scrollbar-thumb { background: var(--ink-black); border-radius: 2px; }
+
         h1 {
-            font-size: 1.4rem;
-            margin: 0 0 12px 0;
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
             line-height: 1.1;
             letter-spacing: -0.5px;
             text-transform: uppercase;
             border-bottom: 2px dashed var(--border);
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
 
         .control-group {
-            margin-bottom: 12px;
+            margin-bottom: 10px; /* Reducido */
             display: flex; flex-direction: column;
         }
 
         label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-bottom: 4px;
             display: flex; justify-content: space-between; align-items: center;
         }
@@ -81,50 +86,50 @@
             color: var(--ink-black);
             font-family: inherit;
             font-weight: 800;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             outline: none; cursor: pointer;
             appearance: none; -webkit-appearance: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
-            width: 10px; height: 18px;
+            width: 10px; height: 16px;
             background: var(--ink-black); cursor: pointer;
         }
         
         input[type="range"]::-moz-range-thumb {
-            width: 10px; height: 18px;
+            width: 10px; height: 16px;
             background: var(--ink-black); border: none; cursor: pointer;
         }
 
-        .color-row { display: flex; gap: 8px; width: 100%; }
+        .color-row { display: flex; gap: 6px; width: 100%; }
 
         input[type="color"] {
             -webkit-appearance: none; border: 2px solid var(--border);
-            width: 100%; height: 25px; cursor: pointer;
+            width: 100%; height: 22px; cursor: pointer;
             background: transparent; padding: 0;
         }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; }
         
-        .value-display { font-size: 0.7rem; font-weight: 800; filter: none; }
+        .value-display { font-size: 0.65rem; font-weight: 800; filter: none; }
 
-        /* --- NUEVA SECCIÓN DE EXPORTACIÓN BASADA EN TU CÓDIGO ANTERIOR --- */
+        /* Sección de exportación comprimida */
         .export-section { 
-            margin-top: 15px; border-top: 2px dashed var(--border); padding-top: 10px; 
+            margin-top: 10px; border-top: 2px dashed var(--border); padding-top: 8px; 
         }
         .export-title { 
-            font-size: 0.75rem; color: var(--ink-black); text-align: center; 
-            margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 0.7rem; color: var(--ink-black); text-align: center; 
+            margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase;
         }
         .actions-row { 
-            display: flex; gap: 4px; justify-content: space-between; margin-bottom: 12px;
+            display: flex; gap: 4px; justify-content: space-between; margin-bottom: 8px;
         }
         
         .btn-action {
             flex: 1; background-color: transparent; border: 2px solid var(--ink-black);
-            color: var(--ink-black); font-family: inherit; font-size: 0.65rem; font-weight: 800;
-            padding: 6px 0; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+            color: var(--ink-black); font-family: inherit; font-size: 0.6rem; font-weight: 800;
+            padding: 4px 0; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
         }
         .btn-action:hover { background-color: var(--ink-black); color: var(--paper-bg); }
         .btn-action.recording { 
@@ -193,7 +198,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN EXPORT & RECORD (Adaptada del código previo) -->
         <div class="export-section">
             <div class="export-title ink-bleed-text">[ EXPORT PNG ]</div>
             <div class="actions-row">
@@ -212,8 +216,14 @@
     </div>
 
     <script>
+        // Optimizaciones de contexto de WebGL para máxima calidad y fluidez
         const canvas = document.getElementById('glcanvas');
-        const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+        const glOptions = { 
+            preserveDrawingBuffer: true, 
+            antialias: false, // Mejora el rendimiento porque el pixelado es deseado en risografía
+            depth: false 
+        };
+        const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
 
         const updateLabel = (id, decimalPlaces) => {
             const el = document.getElementById(id);
@@ -362,19 +372,29 @@
 
         const startTime = performance.now();
 
+        // CACHING DE INPUTS PARA EVITAR LAG EN RENDIMIENTO
+        const inputs = {
+            speed: document.getElementById('speed'),
+            shape: document.getElementById('shape'),
+            halftone: document.getElementById('halftone'),
+            grain: document.getElementById('grain'),
+            offset: document.getElementById('offset'),
+            color1: document.getElementById('color1'),
+            color2: document.getElementById('color2')
+        };
+
         // VARIABLES DE GRABACIÓN
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
         let recWidth, recHeight;
         let activeRecordButton = null;
-        let recCanvas, recGl, recProg; // Motor WebGL secundario para mantener el lienzo principal intacto
+        let recCanvas, recGl, recProg;
 
         window.exportMedia = function(w, h) {
-            // Crea un canvas WebGL oculto exclusivamente para exportar en HD
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = w; tempCanvas.height = h;
-            const tGl = tempCanvas.getContext('webgl', { preserveDrawingBuffer: true });
+            const tGl = tempCanvas.getContext('webgl', glOptions) || tempCanvas.getContext('experimental-webgl', glOptions);
             
             const tProg = tGl.createProgram();
             tGl.attachShader(tProg, compileShader(tGl, tGl.VERTEX_SHADER, vsSource));
@@ -390,16 +410,16 @@
             tGl.vertexAttribPointer(tPos, 2, tGl.FLOAT, false, 0, 0);
             
             const time = (performance.now() - startTime) / 1000;
-            const c1 = hexToRgb(document.getElementById('color1').value);
-            const c2 = hexToRgb(document.getElementById('color2').value);
+            const c1 = hexToRgb(inputs.color1.value);
+            const c2 = hexToRgb(inputs.color2.value);
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(document.getElementById('speed').value));
-            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(document.getElementById('shape').value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_halftone_scale"), parseFloat(document.getElementById('halftone').value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_grain"), parseFloat(document.getElementById('grain').value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(document.getElementById('offset').value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
+            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_halftone_scale"), parseFloat(inputs.halftone.value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_grain"), parseFloat(inputs.grain.value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(inputs.offset.value));
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color1"), c1[0], c1[1], c1[2]);
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color2"), c2[0], c2[1], c2[2]);
             
@@ -407,7 +427,7 @@
             
             let link = document.createElement('a');
             link.download = `RisoLab_Export_${w}x${h}.png`;
-            link.href = tempCanvas.toDataURL('image/png');
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
             link.click();
         }
 
@@ -427,10 +447,9 @@
                 btn.classList.add('recording');
                 document.querySelectorAll('[id^="btn-rec-"]').forEach(b => { if(b !== btn) b.disabled = true; });
 
-                // Inicializar motor WebGL secundario para grabar sin afectar la pantalla
                 recCanvas = document.createElement('canvas');
                 recCanvas.width = w; recCanvas.height = h;
-                recGl = recCanvas.getContext('webgl', { preserveDrawingBuffer: true });
+                recGl = recCanvas.getContext('webgl', glOptions) || recCanvas.getContext('experimental-webgl', glOptions);
                 
                 recProg = recGl.createProgram();
                 recGl.attachShader(recProg, compileShader(recGl, recGl.VERTEX_SHADER, vsSource));
@@ -462,10 +481,10 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                // Mantenemos 50 Mbps para retener el grano exacto y evitar compresión
+                // Tasa de Bits extrema (150 Mbps) para máxima calidad y retención del Halftone
                 mediaRecorder = new MediaRecorder(stream, { 
                     mimeType: mimeType, 
-                    videoBitsPerSecond: 50000000 
+                    videoBitsPerSecond: 150000000 
                 });
                 
                 recordedChunks = [];
@@ -501,14 +520,14 @@
         function render() {
             const time = (performance.now() - startTime) / 1000;
             
-            const speed = parseFloat(document.getElementById('speed').value);
-            const shape = parseInt(document.getElementById('shape').value);
-            const halftone = parseFloat(document.getElementById('halftone').value);
-            const grain = parseFloat(document.getElementById('grain').value);
-            const offset = parseFloat(document.getElementById('offset').value);
-            
-            const c1 = hexToRgb(document.getElementById('color1').value);
-            const c2 = hexToRgb(document.getElementById('color2').value);
+            // Valores leídos desde la caché en lugar de consultar el DOM (Solución de fluidez absoluta)
+            const speed = parseFloat(inputs.speed.value);
+            const shape = parseInt(inputs.shape.value);
+            const halftone = parseFloat(inputs.halftone.value);
+            const grain = parseFloat(inputs.grain.value);
+            const offset = parseFloat(inputs.offset.value);
+            const c1 = hexToRgb(inputs.color1.value);
+            const c2 = hexToRgb(inputs.color2.value);
 
             // Renderizar Lienzo Principal (Lo que el usuario ve)
             gl.useProgram(program);
