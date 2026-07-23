@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riso Lab - Export Ready</title>
+    <title>Riso Lab - Pro Export</title>
     
-    <!-- Enlace de Adobe Fonts (Recuerda reemplazar TU_ID_DE_PROYECTO) -->
+    <!-- ADOBE FONTS: Reemplaza TU_ID_DE_PROYECTO -->
     <link rel="stylesheet" href="https://use.typekit.net/TU_ID_DE_PROYECTO.css">
     
     <style>
@@ -13,17 +13,14 @@
             --paper-bg: #f4f1eb;
             --ink-black: #171717;
             --border: #171717;
+            --accent-red: #ff3333;
         }
         
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             overflow: hidden;
             background-color: var(--paper-bg);
             font-family: 'Aptly', 'Helvetica Neue', Helvetica, sans-serif;
@@ -32,8 +29,7 @@
 
         canvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
+            width: 100vw; height: 100vh;
         }
 
         .ink-bleed-text {
@@ -42,7 +38,6 @@
             font-weight: 800;
         }
 
-        /* UI Panel más pequeño y discreto */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -50,12 +45,11 @@
             transform: translateY(-50%);
             background: var(--paper-bg);
             padding: 16px;
-            width: 200px;
+            width: 210px;
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
             max-height: 95vh;
             overflow-y: auto;
-            transition: opacity 0.3s ease;
         }
 
         h1 {
@@ -64,20 +58,19 @@
             line-height: 1.1;
             letter-spacing: -0.5px;
             text-transform: uppercase;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 8px;
         }
 
         .control-group {
             margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         label {
             font-size: 0.75rem;
             margin-bottom: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
         select, input[type="range"] {
@@ -89,103 +82,57 @@
             font-family: inherit;
             font-weight: 800;
             font-size: 0.75rem;
-            outline: none;
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
+            outline: none; cursor: pointer;
+            appearance: none; -webkit-appearance: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 10px;
-            height: 18px;
-            background: var(--ink-black);
-            cursor: pointer;
+            -webkit-appearance: none; appearance: none;
+            width: 10px; height: 18px;
+            background: var(--ink-black); cursor: pointer;
         }
         
         input[type="range"]::-moz-range-thumb {
-            width: 10px;
-            height: 18px;
-            background: var(--ink-black);
-            border: none;
-            cursor: pointer;
+            width: 10px; height: 18px;
+            background: var(--ink-black); border: none; cursor: pointer;
         }
 
-        .color-row {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-        }
+        .color-row { display: flex; gap: 8px; width: 100%; }
 
         input[type="color"] {
-            -webkit-appearance: none;
-            border: 2px solid var(--border);
-            width: 100%;
-            height: 25px;
-            cursor: pointer;
-            background: transparent;
-            padding: 0;
+            -webkit-appearance: none; border: 2px solid var(--border);
+            width: 100%; height: 25px; cursor: pointer;
+            background: transparent; padding: 0;
         }
-
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; }
         
-        .value-display {
-            font-size: 0.7rem;
-            font-weight: 800;
-            filter: none;
-        }
+        .value-display { font-size: 0.7rem; font-weight: 800; filter: none; }
 
-        /* Botones de Exportación */
-        .export-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-top: 6px;
+        /* --- NUEVA SECCIÓN DE EXPORTACIÓN BASADA EN TU CÓDIGO ANTERIOR --- */
+        .export-section { 
+            margin-top: 15px; border-top: 2px dashed var(--border); padding-top: 10px; 
         }
-
-        button {
-            background: transparent;
-            border: 2px solid var(--ink-black);
-            color: var(--ink-black);
-            font-family: inherit;
-            font-weight: 800;
-            font-size: 0.65rem;
-            padding: 6px 0;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all 0.2s;
+        .export-title { 
+            font-size: 0.75rem; color: var(--ink-black); text-align: center; 
+            margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .actions-row { 
+            display: flex; gap: 4px; justify-content: space-between; margin-bottom: 12px;
         }
         
-        button:hover {
-            background: var(--ink-black);
-            color: var(--paper-bg);
+        .btn-action {
+            flex: 1; background-color: transparent; border: 2px solid var(--ink-black);
+            color: var(--ink-black); font-family: inherit; font-size: 0.65rem; font-weight: 800;
+            padding: 6px 0; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+        }
+        .btn-action:hover { background-color: var(--ink-black); color: var(--paper-bg); }
+        .btn-action.recording { 
+            background-color: var(--accent-red); color: white; border-color: var(--accent-red); 
+            animation: pulse 1s infinite alternate; 
         }
 
-        /* Pantalla de carga al grabar */
-        #recording-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(23, 23, 23, 0.9);
-            color: var(--paper-bg);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-        }
-        .spinner {
-            margin-top: 15px;
-            width: 40px; height: 40px;
-            border: 4px solid var(--paper-bg);
-            border-top: 4px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -199,12 +146,6 @@
             <feBlend in="SourceGraphic" in2="texturedInk" mode="multiply" />
         </filter>
     </svg>
-
-    <!-- Overlay de grabación -->
-    <div id="recording-overlay">
-        <div>Recording High-Res Video...</div>
-        <div class="spinner"></div>
-    </div>
 
     <canvas id="glcanvas"></canvas>
 
@@ -252,27 +193,26 @@
             </div>
         </div>
 
-        <!-- Botones de Exportación -->
-        <div class="control-group" style="margin-top: 15px;">
-            <label class="ink-bleed-text">Export PNG</label>
-            <div class="export-grid">
-                <button onclick="exportMedia('image', '9:16')">9:16</button>
-                <button onclick="exportMedia('image', '16:9')">16:9</button>
+        <!-- SECCIÓN EXPORT & RECORD (Adaptada del código previo) -->
+        <div class="export-section">
+            <div class="export-title ink-bleed-text">[ EXPORT PNG ]</div>
+            <div class="actions-row">
+                <button class="btn-action" onclick="exportMedia(1920, 1080)">16:9</button>
+                <button class="btn-action" onclick="exportMedia(1080, 1920)">9:16</button>
+                <button class="btn-action" onclick="exportMedia(1080, 1440)">3:4</button>
             </div>
-        </div>
-        
-        <div class="control-group">
-            <label class="ink-bleed-text">Record Video (5s)</label>
-            <div class="export-grid">
-                <button onclick="exportMedia('video', '9:16')">REC 9:16</button>
-                <button onclick="exportMedia('video', '16:9')">REC 16:9</button>
+            
+            <div class="export-title ink-bleed-text">[ RECORD VID ]</div>
+            <div class="actions-row">
+                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(1920, 1080, this)">16:9</button>
+                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
+                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('glcanvas');
-        // preserveDrawingBuffer es VITAL para poder extraer PNGs
         const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
 
         const updateLabel = (id, decimalPlaces) => {
@@ -301,6 +241,7 @@
             uniform vec3 u_color2;
             uniform float u_speed;
             uniform int u_shape;
+            
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
@@ -385,20 +326,19 @@
             }
         `;
 
-        function compileShader(type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader)); return null;
+        function compileShader(glContext, type, source) {
+            const shader = glContext.createShader(type);
+            glContext.shaderSource(shader, source);
+            glContext.compileShader(shader);
+            if (!glContext.getShaderParameter(shader, glContext.COMPILE_STATUS)) {
+                console.error(glContext.getShaderInfoLog(shader)); return null;
             } return shader;
         }
 
         const program = gl.createProgram();
-        gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vsSource));
-        gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fsSource));
+        gl.attachShader(program, compileShader(gl, gl.VERTEX_SHADER, vsSource));
+        gl.attachShader(program, compileShader(gl, gl.FRAGMENT_SHADER, fsSource));
         gl.linkProgram(program);
-        gl.useProgram(program);
 
         const positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -407,131 +347,200 @@
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        const uniforms = {
-            resolution: gl.getUniformLocation(program, "u_resolution"),
-            time: gl.getUniformLocation(program, "u_time"),
-            color1: gl.getUniformLocation(program, "u_color1"),
-            color2: gl.getUniformLocation(program, "u_color2"),
-            speed: gl.getUniformLocation(program, "u_speed"),
-            shape: gl.getUniformLocation(program, "u_shape"),
-            halftoneScale: gl.getUniformLocation(program, "u_halftone_scale"),
-            grain: gl.getUniformLocation(program, "u_grain"),
-            offset: gl.getUniformLocation(program, "u_offset")
-        };
-
         const hexToRgb = (hex) => [
             parseInt(hex.slice(1, 3), 16) / 255,
             parseInt(hex.slice(3, 5), 16) / 255,
             parseInt(hex.slice(5, 7), 16) / 255
         ];
 
-        let renderLoop;
-        let isExporting = false;
-
-        function handleResize() {
-            if (isExporting) return; // Congelar resize manual durante exportación
+        window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             gl.viewport(0, 0, canvas.width, canvas.height);
-        }
-
-        window.addEventListener('resize', handleResize);
-        handleResize();
+        });
+        window.dispatchEvent(new Event('resize'));
 
         const startTime = performance.now();
 
-        function render() {
-            const time = (performance.now() - startTime) / 1000;
+        // VARIABLES DE GRABACIÓN
+        let isRecording = false;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let recWidth, recHeight;
+        let activeRecordButton = null;
+        let recCanvas, recGl, recProg; // Motor WebGL secundario para mantener el lienzo principal intacto
 
-            gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-            gl.uniform1f(uniforms.time, time);
+        window.exportMedia = function(w, h) {
+            // Crea un canvas WebGL oculto exclusivamente para exportar en HD
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w; tempCanvas.height = h;
+            const tGl = tempCanvas.getContext('webgl', { preserveDrawingBuffer: true });
             
-            gl.uniform1f(uniforms.speed, parseFloat(document.getElementById('speed').value));
-            gl.uniform1i(uniforms.shape, parseInt(document.getElementById('shape').value));
-            gl.uniform1f(uniforms.halftoneScale, parseFloat(document.getElementById('halftone').value));
-            gl.uniform1f(uniforms.grain, parseFloat(document.getElementById('grain').value));
-            gl.uniform1f(uniforms.offset, parseFloat(document.getElementById('offset').value));
-
+            const tProg = tGl.createProgram();
+            tGl.attachShader(tProg, compileShader(tGl, tGl.VERTEX_SHADER, vsSource));
+            tGl.attachShader(tProg, compileShader(tGl, tGl.FRAGMENT_SHADER, fsSource));
+            tGl.linkProgram(tProg);
+            tGl.useProgram(tProg);
+            
+            const tBuf = tGl.createBuffer();
+            tGl.bindBuffer(tGl.ARRAY_BUFFER, tBuf);
+            tGl.bufferData(tGl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), tGl.STATIC_DRAW);
+            const tPos = tGl.getAttribLocation(tProg, "a_position");
+            tGl.enableVertexAttribArray(tPos);
+            tGl.vertexAttribPointer(tPos, 2, tGl.FLOAT, false, 0, 0);
+            
+            const time = (performance.now() - startTime) / 1000;
             const c1 = hexToRgb(document.getElementById('color1').value);
             const c2 = hexToRgb(document.getElementById('color2').value);
-            gl.uniform3f(uniforms.color1, c1[0], c1[1], c1[2]);
-            gl.uniform3f(uniforms.color2, c2[0], c2[1], c2[2]);
 
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-            renderLoop = requestAnimationFrame(render);
+            tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(document.getElementById('speed').value));
+            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(document.getElementById('shape').value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_halftone_scale"), parseFloat(document.getElementById('halftone').value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_grain"), parseFloat(document.getElementById('grain').value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(document.getElementById('offset').value));
+            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color1"), c1[0], c1[1], c1[2]);
+            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color2"), c2[0], c2[1], c2[2]);
+            
+            tGl.drawArrays(tGl.TRIANGLES, 0, 6);
+            
+            let link = document.createElement('a');
+            link.download = `RisoLab_Export_${w}x${h}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
         }
-        render();
 
-        // LOGICA DE EXPORTACIÓN (Imagen y Video)
-        async function exportMedia(type, ratio) {
-            isExporting = true;
-            document.getElementById('ui-panel').style.opacity = '0';
-            
-            // Definir tamaño objetivo
-            let targetW = 1080;
-            let targetH = 1920; // 9:16 para TikTok/Reels
-            if (ratio === '16:9') {
-                targetW = 1920;
-                targetH = 1080; // 16:9 para YouTube/Escritorio
-            }
+        window.toggleRecord = function(w, h, btn) {
+            if (isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.textContent = btn.dataset.originalText;
+                btn.classList.remove('recording');
+                document.querySelectorAll('[id^="btn-rec-"]').forEach(b => b.disabled = false);
+            } else {
+                recWidth = w;
+                recHeight = h;
+                activeRecordButton = btn;
+                btn.dataset.originalText = btn.textContent;
+                btn.textContent = "STOP";
+                btn.classList.add('recording');
+                document.querySelectorAll('[id^="btn-rec-"]').forEach(b => { if(b !== btn) b.disabled = true; });
 
-            // Forzar resolución del canvas para encuadre y calidad perfecta
-            canvas.width = targetW;
-            canvas.height = targetH;
-            gl.viewport(0, 0, targetW, targetH);
-            
-            // Esperar un fotograma para que el canvas se actualice visualmente
-            await new Promise(r => requestAnimationFrame(r));
-
-            if (type === 'image') {
-                // Exportar PNG
-                const dataURL = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = `RisoLab_${ratio}_${Date.now()}.png`;
-                link.href = dataURL;
-                link.click();
-                restoreCanvas();
-            } 
-            else if (type === 'video') {
-                // Exportar Video (5 segundos)
-                document.getElementById('recording-overlay').style.display = 'flex';
+                // Inicializar motor WebGL secundario para grabar sin afectar la pantalla
+                recCanvas = document.createElement('canvas');
+                recCanvas.width = w; recCanvas.height = h;
+                recGl = recCanvas.getContext('webgl', { preserveDrawingBuffer: true });
                 
-                // Capturar el stream del canvas a 60 FPS
-                const stream = canvas.captureStream(60);
+                recProg = recGl.createProgram();
+                recGl.attachShader(recProg, compileShader(recGl, recGl.VERTEX_SHADER, vsSource));
+                recGl.attachShader(recProg, compileShader(recGl, recGl.FRAGMENT_SHADER, fsSource));
+                recGl.linkProgram(recProg);
                 
-                // Forzar 25 Mbps para máxima calidad y que el ruido/grano no se comprima
-                const options = { videoBitsPerSecond: 25000000 };
-                let recorder;
-                try {
-                    recorder = new MediaRecorder(stream, options);
-                } catch(e) {
-                    recorder = new MediaRecorder(stream); // Fallback por si el navegador no soporta el parametro
+                const tBuf = recGl.createBuffer();
+                recGl.bindBuffer(recGl.ARRAY_BUFFER, tBuf);
+                recGl.bufferData(recGl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), recGl.STATIC_DRAW);
+                const tPos = recGl.getAttribLocation(recProg, "a_position");
+                recGl.enableVertexAttribArray(tPos);
+                recGl.vertexAttribPointer(tPos, 2, recGl.FLOAT, false, 0, 0);
+
+                let stream = recCanvas.captureStream(60);
+                
+                let options = [
+                    'video/mp4;codecs=h264', 'video/mp4;codecs=avc1', 'video/mp4',
+                    'video/webm;codecs=h264', 'video/webm;codecs=vp9', 'video/webm'
+                ];
+                
+                let mimeType = '';
+                for (let type of options) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        mimeType = type;
+                        break;
+                    }
                 }
                 
-                const chunks = [];
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.download = `RisoLab_${ratio}_${Date.now()}.webm`;
-                    link.href = url;
-                    link.click();
-                    document.getElementById('recording-overlay').style.display = 'none';
-                    restoreCanvas();
-                };
+                if(!mimeType) mimeType = 'video/webm'; 
+                let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                recorder.start();
-                // Grabar exactamente 5 segundos y detener
-                setTimeout(() => recorder.stop(), 5000);
+                // Mantenemos 50 Mbps para retener el grano exacto y evitar compresión
+                mediaRecorder = new MediaRecorder(stream, { 
+                    mimeType: mimeType, 
+                    videoBitsPerSecond: 50000000 
+                });
+                
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = function() {
+                    let blob = new Blob(recordedChunks, { type: mimeType });
+                    let url = URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    document.body.appendChild(a);
+                    a.style = 'display: none';
+                    a.href = url;
+                    a.download = `RisoLab_Video_${w}x${h}.${ext}`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    if(ext === 'webm') {
+                        alert("Nota: Tu navegador grabó el video en formato WEBM. Para grabar un MP4 nativo directo para redes, por favor abre la webapp usando Safari.");
+                    }
+                    
+                    recCanvas = null;
+                    recGl = null;
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
             }
         }
 
-        function restoreCanvas() {
-            isExporting = false;
-            document.getElementById('ui-panel').style.opacity = '1';
-            handleResize(); // Regresar al tamaño normal del navegador
+        function render() {
+            const time = (performance.now() - startTime) / 1000;
+            
+            const speed = parseFloat(document.getElementById('speed').value);
+            const shape = parseInt(document.getElementById('shape').value);
+            const halftone = parseFloat(document.getElementById('halftone').value);
+            const grain = parseFloat(document.getElementById('grain').value);
+            const offset = parseFloat(document.getElementById('offset').value);
+            
+            const c1 = hexToRgb(document.getElementById('color1').value);
+            const c2 = hexToRgb(document.getElementById('color2').value);
+
+            // Renderizar Lienzo Principal (Lo que el usuario ve)
+            gl.useProgram(program);
+            gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
+            gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
+            gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
+            gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
+            gl.uniform1f(gl.getUniformLocation(program, "u_halftone_scale"), halftone);
+            gl.uniform1f(gl.getUniformLocation(program, "u_grain"), grain);
+            gl.uniform1f(gl.getUniformLocation(program, "u_offset"), offset);
+            gl.uniform3f(gl.getUniformLocation(program, "u_color1"), c1[0], c1[1], c1[2]);
+            gl.uniform3f(gl.getUniformLocation(program, "u_color2"), c2[0], c2[1], c2[2]);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+            // Renderizar Lienzo Secundario Oculto (Si está grabando)
+            if (isRecording && recGl && recProg) {
+                recGl.useProgram(recProg);
+                recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
+                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_halftone_scale"), halftone);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_grain"), grain);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_offset"), offset);
+                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color1"), c1[0], c1[1], c1[2]);
+                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color2"), c2[0], c2[1], c2[2]);
+                recGl.drawArrays(recGl.TRIANGLES, 0, 6);
+            }
+
+            requestAnimationFrame(render);
         }
+        render();
     </script>
 </body>
 </html>
