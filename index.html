@@ -1,140 +1,200 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motor Risográfico WebGL - Pro</title>
+    <title>Riso Lab</title>
     <style>
         :root {
-            --panel-bg: rgba(15, 15, 15, 0.9);
-            --text: #e0e0e0;
-            --accent: #ff4081;
-            --border: #333;
+            --paper-bg: #f4f1eb; /* Papel Riso */
+            --ink-black: #1a1a1a;
+            --border: #1a1a1a;
         }
+        
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #f4f1eb;
-            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background-color: var(--paper-bg);
         }
+
         canvas {
             display: block;
             width: 100vw;
             height: 100vh;
         }
+
+        /* Utilidad para aplicar el efecto de tinta corrida (Ink Bleed) */
+        .ink-bleed-text {
+            font-family: 'Arial Black', Impact, sans-serif;
+            color: var(--ink-black);
+            filter: url(#ink-bleed-filter);
+            letter-spacing: -1px;
+        }
+
         #ui-panel {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: var(--panel-bg);
-            color: var(--text);
-            padding: 20px;
-            border-radius: 8px;
-            width: 340px;
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--paper-bg);
+            padding: 24px;
+            width: 320px;
+            border: 2px solid var(--ink-black);
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.15); /* Sombra dura analógica */
             max-height: 90vh;
             overflow-y: auto;
         }
+
         h1 {
-            font-size: 1.1rem;
+            font-size: 2.2rem;
             margin: 0 0 15px 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
+            line-height: 1;
+            border-bottom: 2px solid var(--border);
             padding-bottom: 10px;
         }
+
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
             flex-direction: column;
         }
+
         label {
-            font-size: 0.75rem;
-            margin-bottom: 6px;
-            color: #bbb;
+            font-size: 1rem;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             display: flex;
             justify-content: space-between;
         }
+
+        /* Estilo rústico para inputs */
         select, input[type="range"] {
             width: 100%;
             padding: 8px;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            background: #222;
-            color: white;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--ink-black);
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
             outline: none;
             cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
         }
+
+        /* Personalizar el Slider (Thumb) para que se vea tosco */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 25px;
+            background: var(--ink-black);
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 25px;
+            background: var(--ink-black);
+            border: none;
+            cursor: pointer;
+        }
+
         .color-row {
             display: flex;
             gap: 10px;
         }
+
         input[type="color"] {
             -webkit-appearance: none;
-            border: none;
+            border: 2px solid var(--border);
             width: 100%;
-            height: 35px;
-            border-radius: 4px;
+            height: 40px;
             cursor: pointer;
+            background: transparent;
+            padding: 0;
         }
+
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
-        .divider { height: 1px; background: var(--border); margin: 15px 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; }
+        
+        .divider { height: 2px; background: var(--border); margin: 20px 0; }
+        
+        .value-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 0;
+            filter: none; /* No aplicar el filtro a los números para que sean legibles */
+        }
     </style>
 </head>
 <body>
 
+    <!-- Filtro SVG para simular tinta gruesa e irregular -->
+    <svg width="0" height="0" style="position:absolute; z-index:-1;">
+        <filter id="ink-bleed-filter">
+            <!-- Difuminar la forma base -->
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur" />
+            <!-- Aumentar el contraste extremo para solidificar los bordes difusos -->
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" result="ink" />
+            <!-- Mezclar con un ligero ruido -->
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise" />
+            <feComposite in="noise" in2="ink" operator="in" result="texturedInk" />
+            <feBlend in="SourceGraphic" in2="texturedInk" mode="multiply" />
+        </filter>
+    </svg>
+
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
-        <h1>Riso Lab Control</h1>
+        <h1 class="ink-bleed-text">Riso Lab</h1>
         
         <div class="control-group">
-            <label for="shape">Forma Base</label>
+            <label class="ink-bleed-text" for="shape">Base Shape</label>
             <select id="shape">
-                <option value="0">Pirámide Escalonada</option>
-                <option value="1">Onda Circular (Flor)</option>
-                <option value="2">Barras Glitch</option>
+                <option value="0">Stepped Pyramid</option>
+                <option value="1">Circular Wave</option>
+                <option value="2">Glitch Bars</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label for="speed">Velocidad de Loop</label>
-            <input type="range" id="speed" min="0.0" max="2.0" step="0.05" value="0.3">
+            <label class="ink-bleed-text" for="speed">Loop Speed <span class="value-display" id="val-speed">1.00</span></label>
+            <!-- Valores al 50% -->
+            <input type="range" id="speed" min="0.0" max="2.0" step="0.05" value="1.0">
         </div>
 
         <div class="divider"></div>
 
         <div class="control-group">
-            <label for="halftone">Escala de Trama (Halftone) <span id="val-halftone">150</span></label>
-            <input type="range" id="halftone" min="20" max="400" step="10" value="150">
+            <label class="ink-bleed-text" for="halftone">Halftone Scale <span class="value-display" id="val-halftone">210</span></label>
+            <!-- Valores al 50% -->
+            <input type="range" id="halftone" min="20" max="400" step="10" value="210">
         </div>
 
         <div class="control-group">
-            <label for="grain">Intensidad de Grano / Tinta <span id="val-grain">0.4</span></label>
-            <input type="range" id="grain" min="0.0" max="1.0" step="0.05" value="0.4">
+            <label class="ink-bleed-text" for="grain">Ink Grain <span class="value-display" id="val-grain">0.50</span></label>
+            <!-- Valores al 50% -->
+            <input type="range" id="grain" min="0.0" max="1.0" step="0.05" value="0.5">
         </div>
 
         <div class="control-group">
-            <label for="offset">Desfase de Registro (Error) <span id="val-offset">0.015</span></label>
-            <input type="range" id="offset" min="0.0" max="0.1" step="0.005" value="0.015">
+            <label class="ink-bleed-text" for="offset">Registration Offset <span class="value-display" id="val-offset">0.050</span></label>
+            <!-- Valores al 50% -->
+            <input type="range" id="offset" min="0.0" max="0.1" step="0.005" value="0.05">
         </div>
 
         <div class="divider"></div>
 
         <div class="control-group">
-            <label>Tintas Substractivas</label>
+            <label class="ink-bleed-text">Subtractive Inks</label>
             <div class="color-row">
-                <input type="color" id="color1" value="#0055ff"> <!-- Azul Riso -->
-                <input type="color" id="color2" value="#00ff66"> <!-- Verde Riso -->
+                <input type="color" id="color1" value="#0055ff">
+                <input type="color" id="color2" value="#00ff66">
             </div>
         </div>
     </div>
@@ -143,13 +203,18 @@
         const canvas = document.getElementById('glcanvas');
         const gl = canvas.getContext('webgl');
 
-        // Actualizar etiquetas de UI
-        const updateLabel = (id) => {
+        // Actualizar etiquetas numéricas de UI
+        const updateLabel = (id, decimalPlaces) => {
             const el = document.getElementById(id);
             const valEl = document.getElementById(`val-${id}`);
-            el.addEventListener('input', () => valEl.innerText = el.value);
+            el.addEventListener('input', () => {
+                valEl.innerText = parseFloat(el.value).toFixed(decimalPlaces);
+            });
         };
-        ['halftone', 'grain', 'offset'].forEach(updateLabel);
+        updateLabel('speed', 2);
+        updateLabel('halftone', 0);
+        updateLabel('grain', 2);
+        updateLabel('offset', 3);
 
         const vsSource = `
             attribute vec2 a_position;
@@ -166,99 +231,69 @@
             uniform float u_speed;
             uniform int u_shape;
             
-            // Controles de Textura
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
 
-            // Ruido pseudo-aleatorio para el papel y la tinta
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
             }
 
-            // Rotación espacial para la trama
             vec2 rotate(vec2 uv, float angle) {
                 float s = sin(angle); float c = cos(angle);
                 return vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
             }
 
-            // Generador de Formas (Devuelve intensidad de 0 a 1)
             float getShapeIntensity(vec2 uv, float timeOffset) {
                 float d = 0.0;
                 float time = u_time * u_speed + timeOffset;
 
                 if (u_shape == 0) {
-                    // Pirámide Escalonada (Cuadrados concéntricos)
                     d = max(abs(uv.x), abs(uv.y));
-                    // Convertir distancia en escalones puros
                     return fract(floor(d * 15.0 - time * 5.0) / 2.0);
                 } 
                 else if (u_shape == 1) {
-                    // Flor / Ondas (Basado en la 2da imagen)
                     float angle = atan(uv.y, uv.x);
                     float radius = length(uv);
-                    // Deformar el radio basado en el ángulo para hacer pétalos
                     float petals = sin(angle * 8.0) * 0.1; 
                     d = radius + petals;
-                    // Suavizar la onda para que la trama actúe
                     return sin(d * 20.0 - time * 3.0) * 0.5 + 0.5;
                 }
                 else {
-                    // Barras Glitch (Basado en la 3ra imagen)
-                    // Ruido horizontal que se desplaza
                     float band = floor(uv.y * 10.0);
                     float glitchTime = time + random(vec2(band)) * 10.0;
                     return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                 }
             }
 
-            // Función principal de Impresión Riso por capa
             float printLayer(vec2 uv, float angleOffset, float timeOffset) {
-                // 1. Obtener el gradiente o escalón de la forma base
                 float intensity = getShapeIntensity(uv, timeOffset);
-                
-                // 2. Generar la Trama (Halftone) girada
                 vec2 st = gl_FragCoord.xy / u_resolution.y;
                 vec2 rotST = rotate(st, angleOffset); 
                 float dotPattern = sin(rotST.x * u_halftone_scale) * sin(rotST.y * u_halftone_scale);
-                
-                // 3. Generar ruido del esténcil (imperfecciones)
                 float noise = random(uv + u_time * 0.1) * u_grain;
-                
-                // 4. Calcular si la tinta pasa por el esténcil
-                // Si la intensidad de la forma es mayor que el patrón de puntos, hay tinta.
                 float threshold = dotPattern + noise * 2.0 - 1.0;
-                
-                // Smoothstep crea el borde ligeramente difuso de la tinta líquida
                 return smoothstep(threshold - 0.1, threshold + 0.1, intensity * 2.0 - 1.0);
             }
 
             void main() {
-                // Coordenadas normalizadas al centro
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 
-                // TINTA 1: Aplicada en las coordenadas base
-                float ink1 = printLayer(uv, 0.785, 0.0); // Trama rotada 45 grados
-                
-                // TINTA 2: Aplicada con un DESFASE (Error de registro)
+                float ink1 = printLayer(uv, 0.785, 0.0); 
                 vec2 uv_offset = uv + vec2(u_offset, u_offset * 0.5);
-                float ink2 = printLayer(uv_offset, 0.261, 0.5); // Trama rotada 15 grados, desfasada en el tiempo
+                float ink2 = printLayer(uv_offset, 0.261, 0.5); 
                 
-                // MEZCLA SUBSTRACTIVA SOBRE PAPEL
-                vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); // Papel con grano natural
+                vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
-                // Simulación de absorción: La tinta oscurece el papel
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
                 
-                // Blend mode: Multiply (Substractivo)
                 vec3 finalColor = paper * layer1 * layer2;
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
 
-        // Compilar y enlazar (sin cambios)
         function compileShader(type, source) {
             const shader = gl.createShader(type);
             gl.shaderSource(shader, source);
@@ -281,7 +316,6 @@
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // Uniforms
         const uniforms = {
             resolution: gl.getUniformLocation(program, "u_resolution"),
             time: gl.getUniformLocation(program, "u_time"),
@@ -317,8 +351,6 @@
             
             gl.uniform1f(uniforms.speed, parseFloat(document.getElementById('speed').value));
             gl.uniform1i(uniforms.shape, parseInt(document.getElementById('shape').value));
-            
-            // Nuevos uniforms de textura
             gl.uniform1f(uniforms.halftoneScale, parseFloat(document.getElementById('halftone').value));
             gl.uniform1f(uniforms.grain, parseFloat(document.getElementById('grain').value));
             gl.uniform1f(uniforms.offset, parseFloat(document.getElementById('offset').value));
