@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Patrones Prehispánicos - Riso Effect</title>
+    <style>
+        :root {
+            --bg-color: #f4f1eb; /* Color de papel riso */
+            --panel-bg: rgba(25, 25, 25, 0.9);
+            --text: #eee;
+            --accent: #ff4081;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--panel-bg);
+            color: var(--text);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            backdrop-filter: blur(5px);
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+        .control-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        select, input[type="range"], input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+            outline: none;
+        }
+        input[type="range"] {
+            padding: 0;
+        }
+        .color-row {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="mainCanvas"></canvas>
+
+    <div id="ui-panel">
+        <h1>Control de Patrones</h1>
+        
+        <div class="control-group">
+            <label for="shape1">Forma Base 1 (Fondo)</label>
+            <select id="shape1">
+                <option value="square">Pirámide Escalonada (Cuadrado)</option>
+                <option value="circle">Pirámide Circular (Círculo)</option>
+                <option value="cross">Cruz Mesoamericana</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="shape2">Forma Base 2 (Centro)</label>
+            <select id="shape2">
+                <option value="circle">Pirámide Circular (Círculo)</option>
+                <option value="square">Pirámide Escalonada (Cuadrado)</option>
+                <option value="cross">Cruz Mesoamericana</option>
+                <option value="none">Ninguna</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="speed">Velocidad del Loop</label>
+            <input type="range" id="speed" min="0.01" max="0.1" step="0.01" value="0.03">
+        </div>
+
+        <div class="control-group">
+            <label>Colores (Estilo Tintas)</label>
+            <div class="color-row">
+                <input type="color" id="color1" value="#0000ff"> <input type="color" id="color2" value="#00ff00"> <input type="color" id="color3" value="#ff0044"> </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Elementos de UI
+        const uiShape1 = document.getElementById('shape1');
+        const uiShape2 = document.getElementById('shape2');
+        const uiSpeed = document.getElementById('speed');
+        const uiColor1 = document.getElementById('color1');
+        const uiColor2 = document.getElementById('color2');
+        const uiColor3 = document.getElementById('color3');
+
+        let width, height;
+        let time = 0;
+        let noiseCanvas, noiseCtx;
+
+        // Inicializar dimensiones
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            createNoiseLayer();
+        }
+        window.addEventListener('resize', resize);
+
+        // Crear textura de grano (Risografía)
+        function createNoiseLayer() {
+            noiseCanvas = document.createElement('canvas');
+            noiseCanvas.width = width;
+            noiseCanvas.height = height;
+            noiseCtx = noiseCanvas.getContext('2d');
+            
+            const imgData = noiseCtx.createImageData(width, height);
+            const buffer32 = new Uint32Array(imgData.data.buffer);
+            
+            for (let i = 0; i < buffer32.length; i++) {
+                // Generar ruido blanco en escala de grises
+                if (Math.random() < 0.5) {
+                    buffer32[i] = 0xff000000; // Negro transparente
+                } else {
+                    buffer32[i] = 0x11000000; // Muy transparente
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+        }
+
+        // Función para dibujar formas concéntricas (efecto cenital)
+        function drawConcentricShape(type, x, y, baseSize, steps, timeOffset, colorA, colorB) {
+            for (let i = steps; i > 0; i--) {
+                const ratio = i / steps;
+                // Pulso basado en seno para el loop animado
+                const scale = ratio + Math.sin(time + timeOffset + i * 0.2) * 0.1;
+                const currentSize = baseSize * scale;
+
+                ctx.fillStyle = (i % 2 === 0) ? colorA : colorB;
+                ctx.beginPath();
+
+                if (type === 'square') {
+                    ctx.rect(x - currentSize/2, y - currentSize/2, currentSize, currentSize);
+                } else if (type === 'circle') {
+                    ctx.arc(x, y, currentSize/2, 0, Math.PI * 2);
+                } else if (type === 'cross') {
+                    // Cruz estilo prehispánico
+                    const armThick = currentSize * 0.4;
+                    ctx.rect(x - currentSize/2, y - armThick/2, currentSize, armThick);
+                    ctx.rect(x - armThick/2, y - currentSize/2, armThick, currentSize);
+                }
+                
+                ctx.fill();
+            }
+        }
+
+        // Loop de renderizado
+        function animate() {
+            // Fondo color papel riso
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#f4f1eb';
+            ctx.fillRect(0, 0, width, height);
+
+            const speed = parseFloat(uiSpeed.value);
+            time += speed;
+
+            const cx = width / 2;
+            const cy = height / 2;
+            const maxRadius = Math.min(width, height) * 0.8;
+
+            // Simular mezcla de tintas (Multiplicación)
+            ctx.globalCompositeOperation = 'multiply';
+
+            // Dibujar Forma 1
+            if (uiShape1.value !== 'none') {
+                drawConcentricShape(
+                    uiShape1.value, cx, cy, maxRadius, 12, 0, 
+                    uiColor1.value, uiColor2.value
+                );
+            }
+
+            // Dibujar Forma 2 (Centro superpuesto con ligero desfase de tiempo y rotación)
+            if (uiShape2.value !== 'none') {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(Math.sin(time*0.5) * 0.2); // Ligera rotación en loop
+                drawConcentricShape(
+                    uiShape2.value, 0, 0, maxRadius * 0.5, 8, Math.PI, 
+                    uiColor3.value, 'transparent'
+                );
+                ctx.restore();
+            }
+
+            // Aplicar grano/ruido encima de todo
+            ctx.globalCompositeOperation = 'overlay'; // O 'multiply' con baja opacidad
+            ctx.globalAlpha = 0.15;
+            ctx.drawImage(noiseCanvas, 0, 0);
+            ctx.globalAlpha = 1.0;
+
+            requestAnimationFrame(animate);
+        }
+
+        // Iniciar
+        resize();
+        animate();
+    </script>
+</body>
+</html>
