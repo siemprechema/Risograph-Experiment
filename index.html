@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riso Lab</title>
+    <title>Riso Lab - Export Ready</title>
     
-    <!-- 
-      ADOBE FONTS: 
-      Reemplaza el atributo href de abajo con el enlace de tu Proyecto Web de Adobe Fonts.
-      Ejemplo: href="https://use.typekit.net/tu_id_unico.css"
-    -->
+    <!-- Enlace de Adobe Fonts (Recuerda reemplazar TU_ID_DE_PROYECTO) -->
     <link rel="stylesheet" href="https://use.typekit.net/TU_ID_DE_PROYECTO.css">
     
     <style>
@@ -19,7 +15,6 @@
             --border: #171717;
         }
         
-        /* FIX UI/UX: Evita que los elementos se desborden */
         * {
             box-sizing: border-box;
         }
@@ -31,9 +26,8 @@
             height: 100%;
             overflow: hidden;
             background-color: var(--paper-bg);
-            /* Tipografía Aptly de Adobe Fonts con respaldos */
-            font-family: 'Aptly', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-weight: 800; /* 800 equivale a Extra Bold */
+            font-family: 'Aptly', 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: 800;
         }
 
         canvas {
@@ -42,46 +36,45 @@
             height: 100vh;
         }
 
-        /* Efecto de tinta corrida aplicado estratégicamente */
         .ink-bleed-text {
             color: var(--ink-black);
             filter: url(#ink-bleed-filter);
             font-weight: 800;
         }
 
+        /* UI Panel más pequeño y discreto */
         #ui-panel {
             position: absolute;
             top: 50%;
             left: 20px;
             transform: translateY(-50%);
             background: var(--paper-bg);
-            padding: 20px;
-            width: 240px;
+            padding: 16px;
+            width: 200px;
             border: 2px solid var(--ink-black);
-            box-shadow: 6px 6px 0px rgba(0,0,0,0.15);
-            max-height: 90vh;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+            max-height: 95vh;
             overflow-y: auto;
+            transition: opacity 0.3s ease;
         }
 
         h1 {
-            font-size: 1.8rem;
-            margin: 0 0 16px 0;
+            font-size: 1.4rem;
+            margin: 0 0 12px 0;
             line-height: 1.1;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 8px;
             letter-spacing: -0.5px;
             text-transform: uppercase;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
         }
 
         label {
-            font-size: 0.85rem;
-            margin-bottom: 8px;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -89,32 +82,31 @@
 
         select, input[type="range"] {
             width: 100%;
-            padding: 6px;
+            padding: 4px;
             border: 2px solid var(--border);
             background: transparent;
             color: var(--ink-black);
             font-family: inherit;
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             outline: none;
             cursor: pointer;
             appearance: none;
             -webkit-appearance: none;
         }
 
-        /* Deslizador */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 14px;
-            height: 22px;
+            width: 10px;
+            height: 18px;
             background: var(--ink-black);
             cursor: pointer;
         }
         
         input[type="range"]::-moz-range-thumb {
-            width: 14px;
-            height: 22px;
+            width: 10px;
+            height: 18px;
             background: var(--ink-black);
             border: none;
             cursor: pointer;
@@ -122,7 +114,7 @@
 
         .color-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
         }
 
@@ -130,7 +122,7 @@
             -webkit-appearance: none;
             border: 2px solid var(--border);
             width: 100%;
-            height: 35px;
+            height: 25px;
             cursor: pointer;
             background: transparent;
             padding: 0;
@@ -139,18 +131,65 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; }
         
-        .divider { height: 2px; background: var(--border); margin: 15px 0; }
-        
         .value-display {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 800;
             filter: none;
         }
+
+        /* Botones de Exportación */
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid var(--ink-black);
+            color: var(--ink-black);
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 0.65rem;
+            padding: 6px 0;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: var(--ink-black);
+            color: var(--paper-bg);
+        }
+
+        /* Pantalla de carga al grabar */
+        #recording-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(23, 23, 23, 0.9);
+            color: var(--paper-bg);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+        .spinner {
+            margin-top: 15px;
+            width: 40px; height: 40px;
+            border: 4px solid var(--paper-bg);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- Filtro de Tinta Riso perfeccionado -->
     <svg width="0" height="0" style="position:absolute; z-index:-1;">
         <filter id="ink-bleed-filter">
             <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" result="blur" />
@@ -161,13 +200,19 @@
         </filter>
     </svg>
 
+    <!-- Overlay de grabación -->
+    <div id="recording-overlay">
+        <div>Recording High-Res Video...</div>
+        <div class="spinner"></div>
+    </div>
+
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
         <h1 class="ink-bleed-text">Riso Lab</h1>
         
         <div class="control-group">
-            <label class="ink-bleed-text" for="shape">Base Shape</label>
+            <label class="ink-bleed-text" for="shape">Shape</label>
             <select id="shape" class="ink-bleed-text">
                 <option value="0">Square</option>
                 <option value="1">Circle</option>
@@ -180,11 +225,9 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="speed">Loop Speed <span class="value-display" id="val-speed">1.50</span></label>
+            <label class="ink-bleed-text" for="speed">Speed <span class="value-display" id="val-speed">1.50</span></label>
             <input type="range" id="speed" min="0.0" max="4.0" step="0.1" value="1.5">
         </div>
-
-        <div class="divider"></div>
 
         <div class="control-group">
             <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">180</span></label>
@@ -197,24 +240,40 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="offset">Reg. Offset <span class="value-display" id="val-offset">0.035</span></label>
+            <label class="ink-bleed-text" for="offset">Offset <span class="value-display" id="val-offset">0.035</span></label>
             <input type="range" id="offset" min="0.0" max="0.15" step="0.005" value="0.035">
         </div>
 
-        <div class="divider"></div>
-
         <div class="control-group">
-            <label class="ink-bleed-text">Subtractive Inks</label>
+            <label class="ink-bleed-text">Inks</label>
             <div class="color-row">
                 <input type="color" id="color1" value="#0033ff">
                 <input type="color" id="color2" value="#ff0044">
+            </div>
+        </div>
+
+        <!-- Botones de Exportación -->
+        <div class="control-group" style="margin-top: 15px;">
+            <label class="ink-bleed-text">Export PNG</label>
+            <div class="export-grid">
+                <button onclick="exportMedia('image', '9:16')">9:16</button>
+                <button onclick="exportMedia('image', '16:9')">16:9</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label class="ink-bleed-text">Record Video (5s)</label>
+            <div class="export-grid">
+                <button onclick="exportMedia('video', '9:16')">REC 9:16</button>
+                <button onclick="exportMedia('video', '16:9')">REC 16:9</button>
             </div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('glcanvas');
-        const gl = canvas.getContext('webgl');
+        // preserveDrawingBuffer es VITAL para poder extraer PNGs
+        const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
 
         const updateLabel = (id, decimalPlaces) => {
             const el = document.getElementById(id);
@@ -242,7 +301,6 @@
             uniform vec3 u_color2;
             uniform float u_speed;
             uniform int u_shape;
-            
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
@@ -367,12 +425,18 @@
             parseInt(hex.slice(5, 7), 16) / 255
         ];
 
-        window.addEventListener('resize', () => {
+        let renderLoop;
+        let isExporting = false;
+
+        function handleResize() {
+            if (isExporting) return; // Congelar resize manual durante exportación
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             gl.viewport(0, 0, canvas.width, canvas.height);
-        });
-        window.dispatchEvent(new Event('resize'));
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
 
         const startTime = performance.now();
 
@@ -394,9 +458,80 @@
             gl.uniform3f(uniforms.color2, c2[0], c2[1], c2[2]);
 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            requestAnimationFrame(render);
+            renderLoop = requestAnimationFrame(render);
         }
         render();
+
+        // LOGICA DE EXPORTACIÓN (Imagen y Video)
+        async function exportMedia(type, ratio) {
+            isExporting = true;
+            document.getElementById('ui-panel').style.opacity = '0';
+            
+            // Definir tamaño objetivo
+            let targetW = 1080;
+            let targetH = 1920; // 9:16 para TikTok/Reels
+            if (ratio === '16:9') {
+                targetW = 1920;
+                targetH = 1080; // 16:9 para YouTube/Escritorio
+            }
+
+            // Forzar resolución del canvas para encuadre y calidad perfecta
+            canvas.width = targetW;
+            canvas.height = targetH;
+            gl.viewport(0, 0, targetW, targetH);
+            
+            // Esperar un fotograma para que el canvas se actualice visualmente
+            await new Promise(r => requestAnimationFrame(r));
+
+            if (type === 'image') {
+                // Exportar PNG
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `RisoLab_${ratio}_${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+                restoreCanvas();
+            } 
+            else if (type === 'video') {
+                // Exportar Video (5 segundos)
+                document.getElementById('recording-overlay').style.display = 'flex';
+                
+                // Capturar el stream del canvas a 60 FPS
+                const stream = canvas.captureStream(60);
+                
+                // Forzar 25 Mbps para máxima calidad y que el ruido/grano no se comprima
+                const options = { videoBitsPerSecond: 25000000 };
+                let recorder;
+                try {
+                    recorder = new MediaRecorder(stream, options);
+                } catch(e) {
+                    recorder = new MediaRecorder(stream); // Fallback por si el navegador no soporta el parametro
+                }
+                
+                const chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `RisoLab_${ratio}_${Date.now()}.webm`;
+                    link.href = url;
+                    link.click();
+                    document.getElementById('recording-overlay').style.display = 'none';
+                    restoreCanvas();
+                };
+                
+                recorder.start();
+                // Grabar exactamente 5 segundos y detener
+                setTimeout(() => recorder.stop(), 5000);
+            }
+        }
+
+        function restoreCanvas() {
+            isExporting = false;
+            document.getElementById('ui-panel').style.opacity = '1';
+            handleResize(); // Regresar al tamaño normal del navegador
+        }
     </script>
 </body>
 </html>
