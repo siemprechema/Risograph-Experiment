@@ -38,7 +38,7 @@
             font-weight: 800;
         }
 
-        /* Panel UI Comprimido (25% más pequeño) */
+        /* Panel UI Comprimido */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -49,7 +49,7 @@
             width: 200px;
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
-            max-height: 75vh; /* Altura máxima reducida */
+            max-height: 75vh;
             overflow-y: auto;
         }
 
@@ -68,7 +68,7 @@
         }
 
         .control-group {
-            margin-bottom: 10px; /* Reducido */
+            margin-bottom: 10px;
             display: flex; flex-direction: column;
         }
 
@@ -114,7 +114,6 @@
         
         .value-display { font-size: 0.65rem; font-weight: 800; filter: none; }
 
-        /* Sección de exportación comprimida */
         .export-section { 
             margin-top: 10px; border-top: 2px dashed var(--border); padding-top: 8px; 
         }
@@ -216,11 +215,10 @@
     </div>
 
     <script>
-        // Optimizaciones de contexto de WebGL para máxima calidad y fluidez
         const canvas = document.getElementById('glcanvas');
         const glOptions = { 
             preserveDrawingBuffer: true, 
-            antialias: false, // Mejora el rendimiento porque el pixelado es deseado en risografía
+            antialias: false,
             depth: false 
         };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
@@ -372,7 +370,7 @@
 
         const startTime = performance.now();
 
-        // CACHING DE INPUTS PARA EVITAR LAG EN RENDIMIENTO
+        // CACHING DE INPUTS
         const inputs = {
             speed: document.getElementById('speed'),
             shape: document.getElementById('shape'),
@@ -383,7 +381,6 @@
             color2: document.getElementById('color2')
         };
 
-        // VARIABLES DE GRABACIÓN
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
@@ -481,10 +478,11 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                // Tasa de Bits extrema (150 Mbps) para máxima calidad y retención del Halftone
+                // COMPRESIÓN BALANCEADA: 15 Mbps. Mantiene la calidad HD del Riso
+                // pero reduce drásticamente el peso del archivo final.
                 mediaRecorder = new MediaRecorder(stream, { 
                     mimeType: mimeType, 
-                    videoBitsPerSecond: 150000000 
+                    videoBitsPerSecond: 15000000 
                 });
                 
                 recordedChunks = [];
@@ -505,7 +503,7 @@
                     window.URL.revokeObjectURL(url);
                     
                     if(ext === 'webm') {
-                        alert("Nota: Tu navegador grabó el video en formato WEBM. Para grabar un MP4 nativo directo para redes, por favor abre la webapp usando Safari.");
+                        alert("Nota para iOS: Chrome graba en WEBM (se guarda en Archivos). Para guardar en Fotos nativo (.mp4), abre la webapp usando Safari.");
                     }
                     
                     recCanvas = null;
@@ -520,7 +518,6 @@
         function render() {
             const time = (performance.now() - startTime) / 1000;
             
-            // Valores leídos desde la caché en lugar de consultar el DOM (Solución de fluidez absoluta)
             const speed = parseFloat(inputs.speed.value);
             const shape = parseInt(inputs.shape.value);
             const halftone = parseFloat(inputs.halftone.value);
@@ -529,7 +526,6 @@
             const c1 = hexToRgb(inputs.color1.value);
             const c2 = hexToRgb(inputs.color2.value);
 
-            // Renderizar Lienzo Principal (Lo que el usuario ve)
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
@@ -542,7 +538,6 @@
             gl.uniform3f(gl.getUniformLocation(program, "u_color2"), c2[0], c2[1], c2[2]);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-            // Renderizar Lienzo Secundario Oculto (Si está grabando)
             if (isRecording && recGl && recProg) {
                 recGl.useProgram(recProg);
                 recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
