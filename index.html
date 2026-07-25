@@ -169,23 +169,23 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="speed">Speed <span class="value-display" id="val-speed">1.50</span></label>
-            <input type="range" id="speed" min="0.0" max="4.0" step="0.1" value="1.5">
+            <label class="ink-bleed-text" for="speed">Speed <span class="value-display" id="val-speed">2.00</span></label>
+            <input type="range" id="speed" min="0.0" max="4.0" step="0.1" value="2.0">
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">180</span></label>
-            <input type="range" id="halftone" min="10" max="500" step="10" value="180">
+            <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">250</span></label>
+            <input type="range" id="halftone" min="10" max="500" step="10" value="250">
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="grain">Ink Grain <span class="value-display" id="val-grain">0.70</span></label>
-            <input type="range" id="grain" min="0.0" max="1.5" step="0.05" value="0.7">
+            <label class="ink-bleed-text" for="grain">Ink Grain <span class="value-display" id="val-grain">0.75</span></label>
+            <input type="range" id="grain" min="0.0" max="1.5" step="0.05" value="0.75">
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="offset">Offset <span class="value-display" id="val-offset">0.035</span></label>
-            <input type="range" id="offset" min="0.0" max="0.15" step="0.005" value="0.035">
+            <label class="ink-bleed-text" for="offset">Offset <span class="value-display" id="val-offset">0.000</span></label>
+            <input type="range" id="offset" min="0.0" max="0.15" step="0.005" value="0">
         </div>
 
         <div class="control-group">
@@ -292,13 +292,11 @@
                     return d;
                 }
                 else if (u_shape == 5) { 
-                    // Reducido a 8 barras para cortes más anchos y definidos
                     float band = floor(uv.y * 8.0);
                     float glitchTime = time + random(vec2(band)) * 10.0;
                     return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                 }
                 else { 
-                    // Reducido a 8 barras horizontales de desfasaje para esferas
                     float band = floor(uv.y * 8.0);
                     float shift = (random(vec2(band)) - 0.5) * 0.5;
                     vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
