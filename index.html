@@ -38,7 +38,6 @@
             font-weight: 800;
         }
 
-        /* Panel UI ajustado a la altura del boceto (42vh) y manteniendo el ancho */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -49,7 +48,7 @@
             width: 280px; 
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
-            max-height: 42vh; /* Altura reducida basándonos en tu referencia blanca */
+            max-height: 42vh; 
             overflow-y: auto;
         }
 
@@ -293,12 +292,14 @@
                     return d;
                 }
                 else if (u_shape == 5) { 
-                    float band = floor(uv.y * 10.0);
+                    // Reducido a 8 barras para cortes más anchos y definidos
+                    float band = floor(uv.y * 8.0);
                     float glitchTime = time + random(vec2(band)) * 10.0;
                     return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                 }
                 else { 
-                    float band = floor(uv.y * 15.0);
+                    // Reducido a 8 barras horizontales de desfasaje para esferas
+                    float band = floor(uv.y * 8.0);
                     float shift = (random(vec2(band)) - 0.5) * 0.5;
                     vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
                     d = length(gUv);
