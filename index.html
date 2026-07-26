@@ -189,10 +189,11 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text">Inks</label>
+            <label class="ink-bleed-text">Tri-Color Inks</label>
             <div class="color-row">
-                <input type="color" id="color1" value="#0033ff">
-                <input type="color" id="color2" value="#ff0044">
+                <input type="color" id="color1" value="#0033ff"> <!-- Azul -->
+                <input type="color" id="color2" value="#ff0044"> <!-- Rosa -->
+                <input type="color" id="color3" value="#ffaa00"> <!-- Naranja/Amarillo -->
             </div>
         </div>
 
@@ -246,6 +247,7 @@
             uniform float u_time;
             uniform vec3 u_color1;
             uniform vec3 u_color2;
+            uniform vec3 u_color3;
             uniform float u_speed;
             uniform int u_shape;
             
@@ -308,26 +310,43 @@
             float printLayer(vec2 uv, float angleOffset, float timeOffset) {
                 float intensity = getShapeIntensity(uv, timeOffset);
                 vec2 st = gl_FragCoord.xy / u_resolution.y;
+                
+                // EFECTO MOIRÉ AGRESIVO:
+                // Distorsionamos levemente el espacio de la cuadrícula basándonos en la intensidad de la forma.
+                // Esto hace que la malla de puntos se curve ópticamente simulando Op-Art psicodélico.
+                st += uv * intensity * 0.08; 
+                
                 vec2 rotST = rotate(st, angleOffset); 
                 float dotPattern = sin(rotST.x * u_halftone_scale) * sin(rotST.y * u_halftone_scale);
                 float noise = random(uv + u_time * 0.1) * u_grain;
-                float threshold = dotPattern + noise * 2.0 - 1.0;
+                
+                // Contraste afilado para forzar choques duros entre los puntos
+                float threshold = dotPattern * 1.2 + noise * 1.5 - 0.5;
                 return smoothstep(threshold - 0.1, threshold + 0.1, intensity * 2.0 - 1.0);
             }
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 
-                float ink1 = printLayer(uv, 0.785, 0.0); 
-                vec2 uv_offset = uv + vec2(u_offset, u_offset * 0.5);
-                float ink2 = printLayer(uv_offset, 0.261, 0.5); 
+                // Tinta 1 (Ángulo 15 grados)
+                float ink1 = printLayer(uv, 0.261, 0.0); 
+                
+                // Tinta 2 (Ángulo 45 grados, desfasada)
+                vec2 uv_offset1 = uv + vec2(u_offset, u_offset * 0.5);
+                float ink2 = printLayer(uv_offset1, 0.785, 0.33); 
+                
+                // Tinta 3 (Ángulo 75 grados, desfasada inversa)
+                vec2 uv_offset2 = uv + vec2(-u_offset * 0.5, -u_offset);
+                float ink3 = printLayer(uv_offset2, 1.309, 0.66); 
                 
                 vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
+                // Mezcla substractiva tri-color
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
+                vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
                 
-                vec3 finalColor = paper * layer1 * layer2;
+                vec3 finalColor = paper * layer1 * layer2 * layer3;
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -376,7 +395,8 @@
             grain: document.getElementById('grain'),
             offset: document.getElementById('offset'),
             color1: document.getElementById('color1'),
-            color2: document.getElementById('color2')
+            color2: document.getElementById('color2'),
+            color3: document.getElementById('color3')
         };
 
         let isRecording = false;
@@ -407,6 +427,7 @@
             const time = (performance.now() - startTime) / 1000;
             const c1 = hexToRgb(inputs.color1.value);
             const c2 = hexToRgb(inputs.color2.value);
+            const c3 = hexToRgb(inputs.color3.value);
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
@@ -417,6 +438,7 @@
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(inputs.offset.value));
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color1"), c1[0], c1[1], c1[2]);
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color2"), c2[0], c2[1], c2[2]);
+            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color3"), c3[0], c3[1], c3[2]);
             
             tGl.drawArrays(tGl.TRIANGLES, 0, 6);
             
@@ -521,6 +543,7 @@
             const offset = parseFloat(inputs.offset.value);
             const c1 = hexToRgb(inputs.color1.value);
             const c2 = hexToRgb(inputs.color2.value);
+            const c3 = hexToRgb(inputs.color3.value);
 
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
@@ -532,6 +555,7 @@
             gl.uniform1f(gl.getUniformLocation(program, "u_offset"), offset);
             gl.uniform3f(gl.getUniformLocation(program, "u_color1"), c1[0], c1[1], c1[2]);
             gl.uniform3f(gl.getUniformLocation(program, "u_color2"), c2[0], c2[1], c2[2]);
+            gl.uniform3f(gl.getUniformLocation(program, "u_color3"), c3[0], c3[1], c3[2]);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
             if (isRecording && recGl && recProg) {
@@ -545,6 +569,7 @@
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_offset"), offset);
                 recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color1"), c1[0], c1[1], c1[2]);
                 recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color2"), c2[0], c2[1], c2[2]);
+                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color3"), c3[0], c3[1], c3[2]);
                 recGl.drawArrays(recGl.TRIANGLES, 0, 6);
             }
 
