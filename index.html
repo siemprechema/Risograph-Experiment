@@ -155,19 +155,40 @@
     <div id="ui-panel">
         <h1 class="ink-bleed-text">Riso Lab</h1>
         
+        <!-- COMPOSICIÓN DE FORMAS Y MEZCLA -->
         <div class="control-group">
-            <label class="ink-bleed-text" for="shape">Shape</label>
-            <select id="shape" class="ink-bleed-text">
-                <option value="0">Square</option>
-                <option value="1">Circle</option>
-                <option value="2">Flower</option>
-                <option value="3">Triangle</option>
-                <option value="4">Spiral</option>
-                <!-- Nueva Opción Orgánica -->
-                <option value="5">Organic</option>
-                <option value="6">Glitch Bars</option>
-                <option value="7">Glitch Spheres</option>
-                <option value="8">Quad Glitch</option>
+            <label class="ink-bleed-text">Geometry (Inner / Outer)</label>
+            <div class="color-row">
+                <select id="shape" class="ink-bleed-text" title="Shape 1 (Inner/Base)">
+                    <option value="9">Star</option>
+                    <option value="0">Square</option>
+                    <option value="1">Circle</option>
+                    <option value="2">Flower</option>
+                    <option value="3">Triangle</option>
+                    <option value="4">Spiral</option>
+                    <option value="5">Organic</option>
+                    <option value="6">Glitch Bars</option>
+                    <option value="7">Glitch Spheres</option>
+                    <option value="8">Quad Glitch</option>
+                </select>
+                <select id="shape2" class="ink-bleed-text" title="Shape 2 (Outer/Mix)">
+                    <option value="-1">None</option>
+                    <option value="0">Square</option>
+                    <option value="1">Circle</option>
+                    <option value="2">Flower</option>
+                    <option value="3">Triangle</option>
+                    <option value="4">Spiral</option>
+                    <option value="5">Organic</option>
+                    <option value="6">Glitch Bars</option>
+                    <option value="7">Glitch Spheres</option>
+                    <option value="8">Quad Glitch</option>
+                    <option value="9">Star</option>
+                </select>
+            </div>
+            <select id="blend" class="ink-bleed-text" style="margin-top: 6px;">
+                <option value="0">Blend: Morph Center to Edge</option>
+                <option value="1">Blend: Multiply (Moiré Wave)</option>
+                <option value="2">Blend: Hard Intersection</option>
             </select>
         </div>
 
@@ -219,19 +240,17 @@
 
     <script>
         const canvas = document.getElementById('glcanvas');
-        const glOptions = { 
-            preserveDrawingBuffer: true, 
-            antialias: false,
-            depth: false 
-        };
+        const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
 
         const updateLabel = (id, decimalPlaces) => {
             const el = document.getElementById(id);
             const valEl = document.getElementById(`val-${id}`);
-            el.addEventListener('input', () => {
-                valEl.innerText = parseFloat(el.value).toFixed(decimalPlaces);
-            });
+            if(el && valEl) {
+                el.addEventListener('input', () => {
+                    valEl.innerText = parseFloat(el.value).toFixed(decimalPlaces);
+                });
+            }
         };
         updateLabel('speed', 2);
         updateLabel('halftone', 0);
@@ -252,7 +271,10 @@
             uniform vec3 u_color2;
             uniform vec3 u_color3;
             uniform float u_speed;
+            
             uniform int u_shape;
+            uniform int u_shape2;
+            uniform int u_blend;
             
             uniform float u_halftone_scale;
             uniform float u_grain;
@@ -267,82 +289,86 @@
                 return vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
             }
 
-            float getShapeIntensity(vec2 uv, float timeOffset) {
+            // MOTOR DE FORMAS INDIVIDUALES
+            float getSingleShape(int type, vec2 uv, float timeOffset) {
                 float d = 0.0;
                 float time = u_time * u_speed + timeOffset;
 
-                if (u_shape == 0) { 
+                if (type == 0) { // Square
                     d = max(abs(uv.x), abs(uv.y));
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 } 
-                else if (u_shape == 1) { 
+                else if (type == 1) { // Circle
                     d = length(uv);
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else if (u_shape == 2) { 
+                else if (type == 2) { // Flower
                     float angle = atan(uv.y, uv.x);
-                    float radius = length(uv);
-                    float petals = sin(angle * 8.0) * 0.1; 
-                    d = radius + petals;
+                    d = length(uv) + sin(angle * 8.0) * 0.1; 
                     return sin(d * 25.0 - time * 3.0) * 0.5 + 0.5;
                 }
-                else if (u_shape == 3) { 
+                else if (type == 3) { // Triangle
                     d = max(abs(uv.x) * 0.866025 + (uv.y) * 0.5, -(uv.y));
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else if (u_shape == 4) { 
+                else if (type == 4) { // Spiral
                     float angle = atan(uv.y, uv.x);
-                    float r = length(uv);
-                    d = sin(r * 30.0 - angle * 4.0 - time * 5.0) * 0.5 + 0.5;
+                    d = sin(length(uv) * 30.0 - angle * 4.0 - time * 5.0) * 0.5 + 0.5;
                     return d;
                 }
-                else if (u_shape == 5) { 
-                    // FORMA ORGÁNICA: Combina varias frecuencias senoidales para crear una ameba mutante
-                    float angle = atan(uv.y, uv.x);
-                    float r = length(uv);
-                    float blob = sin(angle * 3.0 + time * 2.0) * 0.1 
-                               + cos(angle * 5.0 - time * 1.2) * 0.08 
-                               + sin(angle * 2.0 + time * 0.5) * 0.15;
-                    d = r + blob;
-                    return sin(d * 22.0 - time * 3.5) * 0.5 + 0.5;
+                else if (type == 5) { 
+                    // FORMA ORGÁNICA EXTREMA (Domain Warping)
+                    float t = time * 0.5;
+                    vec2 p = uv;
+                    // Distorsionamos el espacio x, y creando flujo turbulento
+                    p += 0.1 * vec2(sin(t + p.y * 7.0), cos(t + p.x * 6.0));
+                    p += 0.05 * vec2(cos(t * 1.3 + p.x * 14.0), sin(t * 1.1 + p.y * 12.0));
+                    float a = atan(p.y, p.x);
+                    d = length(p) + 0.1 * sin(a * 3.0 + t * 2.0) + 0.05 * cos(a * 7.0 - t);
+                    return sin(d * 20.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else if (u_shape == 6) { 
+                else if (type == 6) { // Glitch Bars
                     float band = floor(uv.y * 8.0);
-                    float glitchTime = time + random(vec2(band)) * 10.0;
-                    return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
+                    return sin(uv.x * 15.0 + time + random(vec2(band))*10.0) * 0.5 + 0.5;
                 }
-                else if (u_shape == 7) { 
+                else if (type == 7) { // Glitch Spheres
                     float band = floor(uv.y * 8.0);
                     float shift = (random(vec2(band)) - 0.5) * 0.5;
                     vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
-                    d = length(gUv);
+                    return sin(length(gUv) * 25.0 - time * 4.0) * 0.5 + 0.5;
+                }
+                else if (type == 8) { // Quad Glitch
+                    float band; float gt;
+                    if (uv.x < 0.0 && uv.y >= 0.0) { band = floor(uv.x * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.y * 15.0 - gt) * 0.5 + 0.5; } 
+                    else if (uv.x >= 0.0 && uv.y >= 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 - gt) * 0.5 + 0.5; } 
+                    else if (uv.x < 0.0 && uv.y < 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 + gt) * 0.5 + 0.5; } 
+                    else { band = floor(uv.x * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.y * 15.0 + gt) * 0.5 + 0.5; }
+                }
+                else if (type == 9) { // Star
+                    float angle = atan(uv.y, uv.x);
+                    d = length(uv) + cos(angle * 10.0) * 0.15;
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else {
-                    // QUAD GLITCH (Shape 8)
-                    float band;
-                    float glitchTime;
-                    
-                    if (uv.x < 0.0 && uv.y >= 0.0) {
-                        band = floor(uv.x * 8.0);
-                        glitchTime = time + random(vec2(band)) * 10.0;
-                        return sin(uv.y * 15.0 - glitchTime) * 0.5 + 0.5;
-                    } 
-                    else if (uv.x >= 0.0 && uv.y >= 0.0) {
-                        band = floor(uv.y * 8.0);
-                        glitchTime = time + random(vec2(band)) * 10.0;
-                        return sin(uv.x * 15.0 - glitchTime) * 0.5 + 0.5;
-                    } 
-                    else if (uv.x < 0.0 && uv.y < 0.0) {
-                        band = floor(uv.y * 8.0);
-                        glitchTime = time + random(vec2(band)) * 10.0;
-                        return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
-                    } 
-                    else {
-                        band = floor(uv.x * 8.0);
-                        glitchTime = time + random(vec2(band)) * 10.0;
-                        return sin(uv.y * 15.0 + glitchTime) * 0.5 + 0.5;
-                    }
+                return 0.0;
+            }
+
+            // COMPOSICIÓN DE FORMAS
+            float getShapeIntensity(vec2 uv, float timeOffset) {
+                float i1 = getSingleShape(u_shape, uv, timeOffset);
+                if (u_shape2 == -1) return i1; // Si no hay forma secundaria, retorna la base
+                
+                float i2 = getSingleShape(u_shape2, uv, timeOffset);
+                
+                if (u_blend == 0) { // Morph Spatial (Centro a Borde)
+                    float dist = length(uv);
+                    float blendFactor = smoothstep(0.1, 0.7, dist + sin(u_time * u_speed)*0.15);
+                    return mix(i1, i2, blendFactor);
+                } 
+                else if (u_blend == 1) { // Multiply (Moiré Wave)
+                    return i1 * i2 * 1.5; 
+                }
+                else { // Hard Intersection
+                    return min(i1, i2);
                 }
             }
 
@@ -420,8 +446,10 @@
         const startTime = performance.now();
 
         const inputs = {
-            speed: document.getElementById('speed'),
             shape: document.getElementById('shape'),
+            shape2: document.getElementById('shape2'),
+            blend: document.getElementById('blend'),
+            speed: document.getElementById('speed'),
             halftone: document.getElementById('halftone'),
             grain: document.getElementById('grain'),
             offset: document.getElementById('offset'),
@@ -464,6 +492,8 @@
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
+            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape2"), parseInt(inputs.shape2.value));
+            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_blend"), parseInt(inputs.blend.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_halftone_scale"), parseFloat(inputs.halftone.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_grain"), parseFloat(inputs.grain.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(inputs.offset.value));
@@ -487,8 +517,7 @@
                 btn.classList.remove('recording');
                 document.querySelectorAll('[id^="btn-rec-"]').forEach(b => b.disabled = false);
             } else {
-                recWidth = w;
-                recHeight = h;
+                recWidth = w; recHeight = h;
                 activeRecordButton = btn;
                 btn.dataset.originalText = btn.textContent;
                 btn.textContent = "STOP";
@@ -517,31 +546,16 @@
                     'video/mp4;codecs=h264', 'video/mp4;codecs=avc1', 'video/mp4',
                     'video/webm;codecs=h264', 'video/webm;codecs=vp9', 'video/webm'
                 ];
-                
                 let mimeType = '';
                 for (let type of options) {
-                    if (MediaRecorder.isTypeSupported(type)) {
-                        mimeType = type;
-                        break;
-                    }
+                    if (MediaRecorder.isTypeSupported(type)) { mimeType = type; break; }
                 }
-                
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                // Tasa de Bits Optimizada a 25 Mbps:
-                // Mantiene el Moiré y Halftones sin que Instagram/TikTok colapsen.
-                mediaRecorder = new MediaRecorder(stream, { 
-                    mimeType: mimeType, 
-                    videoBitsPerSecond: 25000000 
-                });
-                
+                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 25000000 });
                 recordedChunks = [];
-
-                mediaRecorder.ondataavailable = function(e) {
-                    if (e.data.size > 0) recordedChunks.push(e.data);
-                };
-
+                mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = function() {
                     let blob = new Blob(recordedChunks, { type: mimeType });
                     let url = URL.createObjectURL(blob);
@@ -556,9 +570,7 @@
                     if(ext === 'webm') {
                         alert("Nota para iOS: Chrome graba en WEBM (se guarda en Archivos). Para guardar en Fotos nativo (.mp4), abre la webapp usando Safari.");
                     }
-                    
-                    recCanvas = null;
-                    recGl = null;
+                    recCanvas = null; recGl = null;
                 };
 
                 mediaRecorder.start();
@@ -571,6 +583,8 @@
             
             const speed = parseFloat(inputs.speed.value);
             const shape = parseInt(inputs.shape.value);
+            const shape2 = parseInt(inputs.shape2.value);
+            const blend = parseInt(inputs.blend.value);
             const halftone = parseFloat(inputs.halftone.value);
             const grain = parseFloat(inputs.grain.value);
             const offset = parseFloat(inputs.offset.value);
@@ -583,6 +597,8 @@
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
+            gl.uniform1i(gl.getUniformLocation(program, "u_shape2"), shape2);
+            gl.uniform1i(gl.getUniformLocation(program, "u_blend"), blend);
             gl.uniform1f(gl.getUniformLocation(program, "u_halftone_scale"), halftone);
             gl.uniform1f(gl.getUniformLocation(program, "u_grain"), grain);
             gl.uniform1f(gl.getUniformLocation(program, "u_offset"), offset);
@@ -597,6 +613,8 @@
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
+                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape2"), shape2);
+                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_blend"), blend);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_halftone_scale"), halftone);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_grain"), grain);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_offset"), offset);
