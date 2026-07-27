@@ -163,10 +163,11 @@
                 <option value="2">Flower</option>
                 <option value="3">Triangle</option>
                 <option value="4">Spiral</option>
-                <option value="5">Glitch Bars</option>
-                <option value="6">Glitch Spheres</option>
-                <!-- Nueva Opción Cuadrante -->
-                <option value="7">Quad Glitch</option>
+                <!-- Nueva Opción Orgánica -->
+                <option value="5">Organic</option>
+                <option value="6">Glitch Bars</option>
+                <option value="7">Glitch Spheres</option>
+                <option value="8">Quad Glitch</option>
             </select>
         </div>
 
@@ -296,11 +297,21 @@
                     return d;
                 }
                 else if (u_shape == 5) { 
+                    // FORMA ORGÁNICA: Combina varias frecuencias senoidales para crear una ameba mutante
+                    float angle = atan(uv.y, uv.x);
+                    float r = length(uv);
+                    float blob = sin(angle * 3.0 + time * 2.0) * 0.1 
+                               + cos(angle * 5.0 - time * 1.2) * 0.08 
+                               + sin(angle * 2.0 + time * 0.5) * 0.15;
+                    d = r + blob;
+                    return sin(d * 22.0 - time * 3.5) * 0.5 + 0.5;
+                }
+                else if (u_shape == 6) { 
                     float band = floor(uv.y * 8.0);
                     float glitchTime = time + random(vec2(band)) * 10.0;
                     return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                 }
-                else if (u_shape == 6) { 
+                else if (u_shape == 7) { 
                     float band = floor(uv.y * 8.0);
                     float shift = (random(vec2(band)) - 0.5) * 0.5;
                     vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
@@ -308,29 +319,25 @@
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
                 else {
-                    // QUAD GLITCH (Shape 7)
+                    // QUAD GLITCH (Shape 8)
                     float band;
                     float glitchTime;
                     
-                    // Cuadrante Arriba - Izquierda (Mueve Arriba)
                     if (uv.x < 0.0 && uv.y >= 0.0) {
                         band = floor(uv.x * 8.0);
                         glitchTime = time + random(vec2(band)) * 10.0;
                         return sin(uv.y * 15.0 - glitchTime) * 0.5 + 0.5;
                     } 
-                    // Cuadrante Arriba - Derecha (Mueve Derecha)
                     else if (uv.x >= 0.0 && uv.y >= 0.0) {
                         band = floor(uv.y * 8.0);
                         glitchTime = time + random(vec2(band)) * 10.0;
                         return sin(uv.x * 15.0 - glitchTime) * 0.5 + 0.5;
                     } 
-                    // Cuadrante Abajo - Izquierda (Mueve Izquierda)
                     else if (uv.x < 0.0 && uv.y < 0.0) {
                         band = floor(uv.y * 8.0);
                         glitchTime = time + random(vec2(band)) * 10.0;
                         return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                     } 
-                    // Cuadrante Abajo - Derecha (Mueve Abajo)
                     else {
                         band = floor(uv.x * 8.0);
                         glitchTime = time + random(vec2(band)) * 10.0;
@@ -522,9 +529,11 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
+                // Tasa de Bits Optimizada a 25 Mbps:
+                // Mantiene el Moiré y Halftones sin que Instagram/TikTok colapsen.
                 mediaRecorder = new MediaRecorder(stream, { 
                     mimeType: mimeType, 
-                    videoBitsPerSecond: 15000000 
+                    videoBitsPerSecond: 25000000 
                 });
                 
                 recordedChunks = [];
