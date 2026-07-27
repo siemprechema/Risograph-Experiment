@@ -38,7 +38,7 @@
             font-weight: 800;
         }
 
-        /* Panel UI Ultra Compacto (Sin scroll) */
+        /* Panel UI Ultra Compacto */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -46,40 +46,25 @@
             transform: translateY(-50%);
             background: var(--paper-bg);
             padding: 12px;
-            width: 250px; /* Ancho ajustado a la nueva escala */
+            width: 250px; 
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
             max-height: 95vh;
-            overflow-y: hidden; /* Scroll eliminado por diseño compacto */
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 2px dashed var(--border);
-            padding-bottom: 6px;
-            margin-bottom: 8px;
+            overflow-y: hidden; 
         }
 
         h1 {
-            font-size: 1.1rem; /* Tipografía reducida */
-            margin: 0;
-            line-height: 1;
+            font-size: 1.2rem; 
+            margin: 0 0 8px 0;
+            line-height: 1.1;
             letter-spacing: -0.5px;
             text-transform: uppercase;
-        }
-
-        .reset-btn {
-            flex: none;
-            width: auto;
-            padding: 2px 6px;
-            font-size: 0.55rem;
-            margin: 0;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 6px;
         }
 
         .control-group {
-            margin-bottom: 6px; /* Espaciado reducido */
+            margin-bottom: 6px; 
             display: flex; flex-direction: column;
         }
 
@@ -91,7 +76,7 @@
 
         select, input[type="range"] {
             width: 100%;
-            padding: 3px; /* Padding reducido */
+            padding: 3px; 
             border: 2px solid var(--border);
             background: transparent;
             color: var(--ink-black);
@@ -102,7 +87,6 @@
             appearance: none; -webkit-appearance: none;
         }
 
-        /* Sliders minificados */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
             width: 10px; height: 12px;
@@ -118,7 +102,7 @@
 
         input[type="color"] {
             -webkit-appearance: none; border: 2px solid var(--border);
-            width: 100%; height: 20px; cursor: pointer; /* Altura reducida */
+            width: 100%; height: 20px; cursor: pointer; 
             background: transparent; padding: 0;
         }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
@@ -148,6 +132,12 @@
             animation: pulse 1s infinite alternate; 
         }
 
+        .btn-reset {
+            width: 100%;
+            margin-top: 4px;
+            border-style: dashed;
+        }
+
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
@@ -166,10 +156,7 @@
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
-        <div class="header-row">
-            <h1 class="ink-bleed-text">Riso Lab</h1>
-            <button class="btn-action reset-btn" onclick="resetApp()">RESET</button>
-        </div>
+        <h1 class="ink-bleed-text">Riso Lab</h1>
         
         <div class="control-group">
             <label class="ink-bleed-text">Geometry (Inner / Outer)</label>
@@ -237,19 +224,21 @@
         </div>
 
         <div class="export-section">
-            <div class="export-title ink-bleed-text">[ EXPORT PNG ]</div>
+            <div class="export-title ink-bleed-text">EXPORT</div>
             <div class="actions-row">
                 <button class="btn-action" onclick="exportMedia(1920, 1080)">16:9</button>
                 <button class="btn-action" onclick="exportMedia(1080, 1920)">9:16</button>
                 <button class="btn-action" onclick="exportMedia(1080, 1440)">3:4</button>
             </div>
             
-            <div class="export-title ink-bleed-text">[ RECORD VID ]</div>
+            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD</div>
             <div class="actions-row">
                 <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(1920, 1080, this)">16:9</button>
                 <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
                 <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
+
+            <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
         </div>
     </div>
 
@@ -285,9 +274,8 @@
         updateLabel('grain', 2);
         updateLabel('offset', 3);
 
-        // Lógica de Reset
         window.resetApp = function() {
-            inputs.shape.value = "0";      // Square
+            inputs.shape.value = "9";      // Star
             inputs.shape2.value = "-1";    // None
             inputs.blend.value = "0";      // Morph
             inputs.speed.value = "2.0";
@@ -298,7 +286,6 @@
             inputs.color2.value = "#ff0044";
             inputs.color3.value = "#ffaa00";
             
-            // Disparar eventos para actualizar los textos (UI)
             Object.values(inputs).forEach(input => {
                 if(input) input.dispatchEvent(new Event('input'));
             });
