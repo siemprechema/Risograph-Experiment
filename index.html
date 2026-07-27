@@ -165,6 +165,8 @@
                 <option value="4">Spiral</option>
                 <option value="5">Glitch Bars</option>
                 <option value="6">Glitch Spheres</option>
+                <!-- Nueva Opción Cuadrante -->
+                <option value="7">Quad Glitch</option>
             </select>
         </div>
 
@@ -191,9 +193,9 @@
         <div class="control-group">
             <label class="ink-bleed-text">Tri-Color Inks</label>
             <div class="color-row">
-                <input type="color" id="color1" value="#0033ff"> <!-- Azul -->
-                <input type="color" id="color2" value="#ff0044"> <!-- Rosa -->
-                <input type="color" id="color3" value="#ffaa00"> <!-- Naranja/Amarillo -->
+                <input type="color" id="color1" value="#0033ff"> 
+                <input type="color" id="color2" value="#ff0044"> 
+                <input type="color" id="color3" value="#ffaa00"> 
             </div>
         </div>
 
@@ -298,12 +300,42 @@
                     float glitchTime = time + random(vec2(band)) * 10.0;
                     return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
                 }
-                else { 
+                else if (u_shape == 6) { 
                     float band = floor(uv.y * 8.0);
                     float shift = (random(vec2(band)) - 0.5) * 0.5;
                     vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
                     d = length(gUv);
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
+                }
+                else {
+                    // QUAD GLITCH (Shape 7)
+                    float band;
+                    float glitchTime;
+                    
+                    // Cuadrante Arriba - Izquierda (Mueve Arriba)
+                    if (uv.x < 0.0 && uv.y >= 0.0) {
+                        band = floor(uv.x * 8.0);
+                        glitchTime = time + random(vec2(band)) * 10.0;
+                        return sin(uv.y * 15.0 - glitchTime) * 0.5 + 0.5;
+                    } 
+                    // Cuadrante Arriba - Derecha (Mueve Derecha)
+                    else if (uv.x >= 0.0 && uv.y >= 0.0) {
+                        band = floor(uv.y * 8.0);
+                        glitchTime = time + random(vec2(band)) * 10.0;
+                        return sin(uv.x * 15.0 - glitchTime) * 0.5 + 0.5;
+                    } 
+                    // Cuadrante Abajo - Izquierda (Mueve Izquierda)
+                    else if (uv.x < 0.0 && uv.y < 0.0) {
+                        band = floor(uv.y * 8.0);
+                        glitchTime = time + random(vec2(band)) * 10.0;
+                        return sin(uv.x * 15.0 + glitchTime) * 0.5 + 0.5;
+                    } 
+                    // Cuadrante Abajo - Derecha (Mueve Abajo)
+                    else {
+                        band = floor(uv.x * 8.0);
+                        glitchTime = time + random(vec2(band)) * 10.0;
+                        return sin(uv.y * 15.0 + glitchTime) * 0.5 + 0.5;
+                    }
                 }
             }
 
@@ -311,16 +343,12 @@
                 float intensity = getShapeIntensity(uv, timeOffset);
                 vec2 st = gl_FragCoord.xy / u_resolution.y;
                 
-                // EFECTO MOIRÉ AGRESIVO:
-                // Distorsionamos levemente el espacio de la cuadrícula basándonos en la intensidad de la forma.
-                // Esto hace que la malla de puntos se curve ópticamente simulando Op-Art psicodélico.
                 st += uv * intensity * 0.08; 
                 
                 vec2 rotST = rotate(st, angleOffset); 
                 float dotPattern = sin(rotST.x * u_halftone_scale) * sin(rotST.y * u_halftone_scale);
                 float noise = random(uv + u_time * 0.1) * u_grain;
                 
-                // Contraste afilado para forzar choques duros entre los puntos
                 float threshold = dotPattern * 1.2 + noise * 1.5 - 0.5;
                 return smoothstep(threshold - 0.1, threshold + 0.1, intensity * 2.0 - 1.0);
             }
@@ -328,20 +356,16 @@
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 
-                // Tinta 1 (Ángulo 15 grados)
                 float ink1 = printLayer(uv, 0.261, 0.0); 
                 
-                // Tinta 2 (Ángulo 45 grados, desfasada)
                 vec2 uv_offset1 = uv + vec2(u_offset, u_offset * 0.5);
                 float ink2 = printLayer(uv_offset1, 0.785, 0.33); 
                 
-                // Tinta 3 (Ángulo 75 grados, desfasada inversa)
                 vec2 uv_offset2 = uv + vec2(-u_offset * 0.5, -u_offset);
                 float ink3 = printLayer(uv_offset2, 1.309, 0.66); 
                 
                 vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
-                // Mezcla substractiva tri-color
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
                 vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
