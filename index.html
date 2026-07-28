@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riso Lab - CMYK Edition</title>
+    <title>Riso Lab - CMYK Master</title>
     
     <!-- ADOBE FONTS: Reemplaza TU_ID_DE_PROYECTO -->
     <link rel="stylesheet" href="https://use.typekit.net/TU_ID_DE_PROYECTO.css">
@@ -38,6 +38,7 @@
             font-weight: 800;
         }
 
+        /* Panel UI Ultra Compacto */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -45,21 +46,36 @@
             transform: translateY(-50%);
             background: var(--paper-bg);
             padding: 12px;
-            width: 250px; 
+            width: 260px; 
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
             max-height: 95vh;
             overflow-y: hidden; 
         }
 
-        h1 {
-            font-size: 1.4rem; 
-            margin: 0 0 10px 0;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
             border-bottom: 2px dashed var(--border);
             padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: 1.1rem; 
+            margin: 0;
+            line-height: 1;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .reset-btn {
+            flex: none;
+            width: auto;
+            padding: 2px 6px;
+            font-size: 0.55rem;
+            margin: 0;
         }
 
         .control-group {
@@ -155,8 +171,27 @@
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
-        <h1 class="ink-bleed-text">Riso Lab</h1>
+        <div class="header-row">
+            <h1 class="ink-bleed-text">Riso Lab</h1>
+            <!-- Botón oculto para subir imágenes -->
+            <input type="file" id="file-upload" accept="image/png, image/jpeg" style="display:none;">
+            <button class="btn-action reset-btn" onclick="document.getElementById('file-upload').click()">+ UPLOAD</button>
+        </div>
         
+        <div class="control-group">
+            <label class="ink-bleed-text">Mode & Raster</label>
+            <div class="color-row">
+                <select id="mode" class="ink-bleed-text">
+                    <option value="0">Generator</option>
+                    <option value="1">Image CMYK</option>
+                </select>
+                <select id="raster" class="ink-bleed-text">
+                    <option value="0">Halftone (AM)</option>
+                    <option value="1">Stochastic (FM)</option>
+                </select>
+            </div>
+        </div>
+
         <div class="control-group">
             <label class="ink-bleed-text">Geometry (Inner / Outer)</label>
             <div class="color-row">
@@ -204,12 +239,12 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">250</span></label>
+            <label class="ink-bleed-text" for="halftone">Halftone / Grain Size <span class="value-display" id="val-halftone">250</span></label>
             <input type="range" id="halftone" min="10" max="500" step="10" value="250">
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text" for="grain">Ink Grain <span class="value-display" id="val-grain">0.75</span></label>
+            <label class="ink-bleed-text" for="grain">Ink Bleed <span class="value-display" id="val-grain">0.75</span></label>
             <input type="range" id="grain" min="0.0" max="1.5" step="0.05" value="0.75">
         </div>
 
@@ -243,7 +278,6 @@
                 <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
 
-            <!-- Botón de Reset al final de la UI -->
             <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
         </div>
     </div>
@@ -253,7 +287,24 @@
         const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
 
+        // Variables Globales de Interacción e Imagen
+        let mouseX = 0.0, mouseY = 0.0;
+        let customImage = null;
+        let imgWidth = 1.0, imgHeight = 1.0;
+
+        // RASTREO DEL MOUSE Y TOUCH (Liquid Ripple)
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        });
+        window.addEventListener('touchmove', (e) => {
+            mouseX = (e.touches[0].clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.touches[0].clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        }, {passive: true});
+
         const inputs = {
+            mode: document.getElementById('mode'),
+            raster: document.getElementById('raster'),
             shape: document.getElementById('shape'),
             shape2: document.getElementById('shape2'),
             blend: document.getElementById('blend'),
@@ -284,24 +335,60 @@
         updateLabel('offset', 3);
 
         window.resetApp = function() {
-            inputs.shape.value = "0";      // Square
-            inputs.shape2.value = "-1";    // None
-            inputs.blend.value = "0";      // Morph
+            inputs.mode.value = "0";       // Generator
+            inputs.raster.value = "0";     // Halftone
+            inputs.shape.value = "0";      
+            inputs.shape2.value = "-1";    
+            inputs.blend.value = "0";      
             inputs.scale.value = "1.0";
             inputs.speed.value = "2.0";
             inputs.halftone.value = "250";
             inputs.grain.value = "0.75";
             inputs.offset.value = "0";
-            inputs.color1.value = "#00ccff"; // Cyan
-            inputs.color2.value = "#ff0066"; // Magenta
-            inputs.color3.value = "#ffe600"; // Yellow
-            inputs.color4.value = "#111111"; // Black
+            inputs.color1.value = "#00ccff"; 
+            inputs.color2.value = "#ff0066"; 
+            inputs.color3.value = "#ffe600"; 
+            inputs.color4.value = "#111111"; 
             
             Object.values(inputs).forEach(input => {
                 if(input) input.dispatchEvent(new Event('input'));
             });
         };
 
+        // GESTIÓN DE SUBIDA DE IMAGEN
+        const texture = gl.createTexture();
+        function setupTexture(glCtx, prog) {
+            glCtx.bindTexture(glCtx.TEXTURE_2D, texture);
+            if (customImage) {
+                glCtx.texImage2D(glCtx.TEXTURE_2D, 0, glCtx.RGBA, glCtx.RGBA, glCtx.UNSIGNED_BYTE, customImage);
+            } else {
+                glCtx.texImage2D(glCtx.TEXTURE_2D, 0, glCtx.RGBA, 1, 1, 0, glCtx.RGBA, glCtx.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
+            }
+            glCtx.texParameteri(glCtx.TEXTURE_2D, glCtx.TEXTURE_WRAP_S, glCtx.CLAMP_TO_EDGE);
+            glCtx.texParameteri(glCtx.TEXTURE_2D, glCtx.TEXTURE_WRAP_T, glCtx.CLAMP_TO_EDGE);
+            glCtx.texParameteri(glCtx.TEXTURE_2D, glCtx.TEXTURE_MIN_FILTER, glCtx.LINEAR);
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_image"), 0);
+        }
+
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    customImage = img;
+                    imgWidth = img.width;
+                    imgHeight = img.height;
+                    setupTexture(gl, program);
+                    inputs.mode.value = "1"; // Auto-cambio a modo CMYK Image
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // EL SHADER MAESTRO ACTUALIZADO (Mouse Ripple + CMYK Separation + Stochastic)
         const vsSource = `
             attribute vec2 a_position;
             void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
@@ -319,6 +406,8 @@
             uniform float u_speed;
             uniform float u_scale;
             
+            uniform int u_mode;
+            uniform int u_raster;
             uniform int u_shape;
             uniform int u_shape2;
             uniform int u_blend;
@@ -326,6 +415,10 @@
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
+
+            uniform vec2 u_mouse;
+            uniform sampler2D u_image;
+            uniform vec2 u_image_res;
 
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
@@ -400,63 +493,107 @@
                 return 0.0;
             }
 
-            float getShapeIntensity(vec2 uv, float timeOffset) {
+            float getShapeIntensity(vec2 uv, float timeOffset, int channel) {
+                // MODO: IMAGE CMYK SEPARATION
+                if (u_mode == 1) {
+                    // Mapeo Object-Fit: Cover (La imagen no se estira)
+                    vec2 st = (uv * min(u_resolution.x, u_resolution.y)) / u_resolution.xy + 0.5;
+                    st.y = 1.0 - st.y; // Flip Y
+                    
+                    float canvasAspect = u_resolution.x / u_resolution.y;
+                    float imgAspect = u_image_res.x / max(u_image_res.y, 1.0);
+                    vec2 ratio = vec2(min(canvasAspect / imgAspect, 1.0), min(imgAspect / canvasAspect, 1.0));
+                    st = (st - 0.5) * ratio + 0.5;
+
+                    // Distorsión sutil matemática en la imagen
+                    float mathDist = getSingleShape(u_shape, uv, timeOffset);
+                    st += uv * mathDist * 0.03 * sin(u_time);
+
+                    vec4 tex = texture2D(u_image, st);
+                    float r = tex.r; float g = tex.g; float b = tex.b;
+                    float k = 1.0 - max(r, max(g, b));
+                    float c = (1.0 - r - k) / (1.0 - k + 0.0001);
+                    float m = (1.0 - g - k) / (1.0 - k + 0.0001);
+                    float y = (1.0 - b - k) / (1.0 - k + 0.0001);
+
+                    // Curvas de contraste duro Riso
+                    c = smoothstep(0.0, 0.9, c);
+                    m = smoothstep(0.0, 0.9, m);
+                    y = smoothstep(0.0, 0.9, y);
+                    k = smoothstep(0.0, 0.9, k);
+
+                    if (channel == 0) return c;
+                    if (channel == 1) return m;
+                    if (channel == 2) return y;
+                    if (channel == 3) return k;
+                }
+
+                // MODO: MATH GENERATOR
                 float i1 = getSingleShape(u_shape, uv, timeOffset);
                 if (u_shape2 == -1) return i1; 
                 
                 float i2 = getSingleShape(u_shape2, uv, timeOffset);
-                
                 if (u_blend == 0) { 
-                    float dist = length(uv);
-                    float blendFactor = smoothstep(0.1, 0.7, dist + sin(u_time * u_speed)*0.15);
+                    float blendFactor = smoothstep(0.1, 0.7, length(uv) + sin(u_time * u_speed)*0.15);
                     return mix(i1, i2, blendFactor);
                 } 
-                else if (u_blend == 1) { 
-                    return i1 * i2 * 1.5; 
-                }
-                else { 
-                    return min(i1, i2);
-                }
+                else if (u_blend == 1) { return i1 * i2 * 1.5; }
+                else { return min(i1, i2); }
             }
 
-            float printLayer(vec2 uv, float angleOffset, float timeOffset) {
-                float intensity = getShapeIntensity(uv, timeOffset);
+            float printLayer(vec2 uv, float angleOffset, float timeOffset, int channel) {
+                float intensity = getShapeIntensity(uv, timeOffset, channel);
                 vec2 st = gl_FragCoord.xy / u_resolution.y;
                 
                 st += uv * intensity * 0.08; 
-                
                 vec2 rotST = rotate(st, angleOffset); 
                 float dotPattern = sin(rotST.x * u_halftone_scale) * sin(rotST.y * u_halftone_scale);
                 float noise = random(uv + u_time * 0.1) * u_grain;
                 
-                float threshold = dotPattern * 1.2 + noise * 1.5 - 0.5;
+                float threshold;
+                if (u_raster == 1) {
+                    // STOCHASTIC / FM NOISE SCREENING
+                    float stoch = random(rotST * u_halftone_scale * 0.2 + u_time * 0.05);
+                    threshold = stoch * 1.5 + noise * 1.5 - 0.5;
+                } else {
+                    // HALFTONE / AM SCREENING
+                    threshold = dotPattern * 1.2 + noise * 1.5 - 0.5;
+                }
+                
                 return smoothstep(threshold - 0.1, threshold + 0.1, intensity * 2.0 - 1.0);
             }
 
             void main() {
+                // UV Base
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-                uv /= u_scale;
+                uv /= max(u_scale, 0.1);
                 
-                float ink1 = printLayer(uv, 0.261, 0.0); 
+                // MOUSE RIPPLE INTERACTION (Liquid Repulsion)
+                vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
+                float mouseDist = length(mouseDelta);
+                uv -= mouseDelta * exp(-mouseDist * 5.0) * 0.15; 
+                
+                // Procesamiento CMYK de Capas
+                float ink1 = printLayer(uv, 0.261, 0.0, 0); // Cyan (15 deg)
                 
                 vec2 uv_offset1 = uv + vec2(u_offset, u_offset * 0.5);
-                float ink2 = printLayer(uv_offset1, 1.309, 0.33); 
+                float ink2 = printLayer(uv_offset1, 1.309, 0.33, 1); // Magenta (75 deg)
                 
                 vec2 uv_offset2 = uv + vec2(-u_offset * 0.5, -u_offset);
-                float ink3 = printLayer(uv_offset2, 0.0, 0.66); 
+                float ink3 = printLayer(uv_offset2, 0.0, 0.66, 2); // Yellow (0 deg)
                 
                 vec2 uv_offset3 = uv + vec2(u_offset * 0.8, -u_offset * 0.8);
-                float ink4 = printLayer(uv_offset3, 0.785, 0.99);
+                float ink4 = printLayer(uv_offset3, 0.785, 0.99, 3); // Black (45 deg)
 
                 vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
+                // Mezcla Substractiva
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
                 vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
                 vec3 layer4 = mix(vec3(1.0), u_color4, ink4);
                 
                 vec3 finalColor = paper * layer1 * layer2 * layer3 * layer4;
-
                 gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
@@ -497,6 +634,36 @@
 
         const startTime = performance.now();
 
+        // Función para pasar uniformes a cualquier contexto (Principal o Export)
+        function applyUniforms(glCtx, prog, w, h) {
+            const time = (performance.now() - startTime) / 1000;
+            glCtx.uniform2f(glCtx.getUniformLocation(prog, "u_resolution"), w, h);
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_time"), time);
+            glCtx.uniform2f(glCtx.getUniformLocation(prog, "u_mouse"), mouseX, mouseY);
+            glCtx.uniform2f(glCtx.getUniformLocation(prog, "u_image_res"), imgWidth, imgHeight);
+            
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_mode"), parseInt(inputs.mode.value));
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_raster"), parseInt(inputs.raster.value));
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_shape"), parseInt(inputs.shape.value));
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_shape2"), parseInt(inputs.shape2.value));
+            glCtx.uniform1i(glCtx.getUniformLocation(prog, "u_blend"), parseInt(inputs.blend.value));
+            
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_scale"), parseFloat(inputs.scale.value));
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_speed"), parseFloat(inputs.speed.value));
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_halftone_scale"), parseFloat(inputs.halftone.value));
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_grain"), parseFloat(inputs.grain.value));
+            glCtx.uniform1f(glCtx.getUniformLocation(prog, "u_offset"), parseFloat(inputs.offset.value));
+            
+            const c1 = hexToRgb(inputs.color1.value);
+            const c2 = hexToRgb(inputs.color2.value);
+            const c3 = hexToRgb(inputs.color3.value);
+            const c4 = hexToRgb(inputs.color4.value);
+            glCtx.uniform3f(glCtx.getUniformLocation(prog, "u_color1"), c1[0], c1[1], c1[2]);
+            glCtx.uniform3f(glCtx.getUniformLocation(prog, "u_color2"), c2[0], c2[1], c2[2]);
+            glCtx.uniform3f(glCtx.getUniformLocation(prog, "u_color3"), c3[0], c3[1], c3[2]);
+            glCtx.uniform3f(glCtx.getUniformLocation(prog, "u_color4"), c4[0], c4[1], c4[2]);
+        }
+
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
@@ -522,26 +689,8 @@
             tGl.enableVertexAttribArray(tPos);
             tGl.vertexAttribPointer(tPos, 2, tGl.FLOAT, false, 0, 0);
             
-            const time = (performance.now() - startTime) / 1000;
-            const c1 = hexToRgb(inputs.color1.value);
-            const c2 = hexToRgb(inputs.color2.value);
-            const c3 = hexToRgb(inputs.color3.value);
-            const c4 = hexToRgb(inputs.color4.value);
-
-            tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
-            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
-            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape2"), parseInt(inputs.shape2.value));
-            tGl.uniform1i(tGl.getUniformLocation(tProg, "u_blend"), parseInt(inputs.blend.value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_halftone_scale"), parseFloat(inputs.halftone.value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_grain"), parseFloat(inputs.grain.value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_offset"), parseFloat(inputs.offset.value));
-            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color1"), c1[0], c1[1], c1[2]);
-            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color2"), c2[0], c2[1], c2[2]);
-            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color3"), c3[0], c3[1], c3[2]);
-            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color4"), c4[0], c4[1], c4[2]);
+            setupTexture(tGl, tProg);
+            applyUniforms(tGl, tProg, w, h);
             
             tGl.drawArrays(tGl.TRIANGLES, 0, 6);
             
@@ -582,6 +731,8 @@
                 recGl.enableVertexAttribArray(tPos);
                 recGl.vertexAttribPointer(tPos, 2, recGl.FLOAT, false, 0, 0);
 
+                setupTexture(recGl, recProg);
+
                 let stream = recCanvas.captureStream(60);
                 
                 let options = [
@@ -608,10 +759,6 @@
                     a.download = `RisoLab_Video_${w}x${h}.${ext}`;
                     a.click();
                     window.URL.revokeObjectURL(url);
-                    
-                    if(ext === 'webm') {
-                        alert("Nota para iOS: Chrome graba en WEBM (se guarda en Archivos). Para guardar en Fotos nativo (.mp4), abre la webapp usando Safari.");
-                    }
                     recCanvas = null; recGl = null;
                 };
 
@@ -620,55 +767,18 @@
             }
         }
 
-        function render() {
-            const time = (performance.now() - startTime) / 1000;
-            
-            const scale = parseFloat(inputs.scale.value);
-            const speed = parseFloat(inputs.speed.value);
-            const shape = parseInt(inputs.shape.value);
-            const shape2 = parseInt(inputs.shape2.value);
-            const blend = parseInt(inputs.blend.value);
-            const halftone = parseFloat(inputs.halftone.value);
-            const grain = parseFloat(inputs.grain.value);
-            const offset = parseFloat(inputs.offset.value);
-            const c1 = hexToRgb(inputs.color1.value);
-            const c2 = hexToRgb(inputs.color2.value);
-            const c3 = hexToRgb(inputs.color3.value);
-            const c4 = hexToRgb(inputs.color4.value);
+        // Setup inicial textura
+        gl.useProgram(program);
+        setupTexture(gl, program);
 
+        function render() {
             gl.useProgram(program);
-            gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
-            gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
-            gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
-            gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
-            gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
-            gl.uniform1i(gl.getUniformLocation(program, "u_shape2"), shape2);
-            gl.uniform1i(gl.getUniformLocation(program, "u_blend"), blend);
-            gl.uniform1f(gl.getUniformLocation(program, "u_halftone_scale"), halftone);
-            gl.uniform1f(gl.getUniformLocation(program, "u_grain"), grain);
-            gl.uniform1f(gl.getUniformLocation(program, "u_offset"), offset);
-            gl.uniform3f(gl.getUniformLocation(program, "u_color1"), c1[0], c1[1], c1[2]);
-            gl.uniform3f(gl.getUniformLocation(program, "u_color2"), c2[0], c2[1], c2[2]);
-            gl.uniform3f(gl.getUniformLocation(program, "u_color3"), c3[0], c3[1], c3[2]);
-            gl.uniform3f(gl.getUniformLocation(program, "u_color4"), c4[0], c4[1], c4[2]);
+            applyUniforms(gl, program, canvas.width, canvas.height);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
             if (isRecording && recGl && recProg) {
                 recGl.useProgram(recProg);
-                recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
-                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
-                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape2"), shape2);
-                recGl.uniform1i(recGl.getUniformLocation(recProg, "u_blend"), blend);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_halftone_scale"), halftone);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_grain"), grain);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_offset"), offset);
-                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color1"), c1[0], c1[1], c1[2]);
-                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color2"), c2[0], c2[1], c2[2]);
-                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color3"), c3[0], c3[1], c3[2]);
-                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color4"), c4[0], c4[1], c4[2]);
+                applyUniforms(recGl, recProg, recWidth, recHeight);
                 recGl.drawArrays(recGl.TRIANGLES, 0, 6);
             }
 
