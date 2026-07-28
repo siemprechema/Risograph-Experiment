@@ -52,29 +52,14 @@
             overflow-y: hidden; 
         }
 
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 2px dashed var(--border);
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
-
         h1 {
-            font-size: 1.1rem; 
-            margin: 0;
-            line-height: 1;
+            font-size: 1.4rem; 
+            margin: 0 0 10px 0;
+            line-height: 1.1;
             letter-spacing: -0.5px;
             text-transform: uppercase;
-        }
-
-        .reset-btn {
-            flex: none;
-            width: auto;
-            padding: 2px 6px;
-            font-size: 0.55rem;
-            margin: 0;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 6px;
         }
 
         .control-group {
@@ -170,10 +155,7 @@
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
-        <div class="header-row">
-            <h1 class="ink-bleed-text">Riso Lab</h1>
-            <button class="btn-action reset-btn" onclick="resetApp()">RESET</button>
-        </div>
+        <h1 class="ink-bleed-text">Riso Lab</h1>
         
         <div class="control-group">
             <label class="ink-bleed-text">Geometry (Inner / Outer)</label>
@@ -260,6 +242,9 @@
                 <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
                 <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
+
+            <!-- Botón de Reset al final de la UI -->
+            <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
         </div>
     </div>
 
@@ -387,7 +372,6 @@
                     return sin(d * 20.0 - time * 4.0) * 0.5 + 0.5;
                 }
                 else if (type == 9) { 
-                    // HYPER ORGANIC (Chaos & Contrast)
                     float t = time * 0.8;
                     vec2 p = uv * 1.2;
                     p += 0.15 * vec2(sin(t*1.5 + p.y*12.0), cos(t*1.2 + p.x*10.0));
@@ -450,28 +434,22 @@
             }
 
             void main() {
-                // Escalar coordenadas desde el centro
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 uv /= u_scale;
                 
-                // Tinta 1 (Cian, 15 grados)
                 float ink1 = printLayer(uv, 0.261, 0.0); 
                 
-                // Tinta 2 (Magenta, 75 grados)
                 vec2 uv_offset1 = uv + vec2(u_offset, u_offset * 0.5);
                 float ink2 = printLayer(uv_offset1, 1.309, 0.33); 
                 
-                // Tinta 3 (Amarillo, 0 grados)
                 vec2 uv_offset2 = uv + vec2(-u_offset * 0.5, -u_offset);
                 float ink3 = printLayer(uv_offset2, 0.0, 0.66); 
                 
-                // Tinta 4 (Negro, 45 grados)
                 vec2 uv_offset3 = uv + vec2(u_offset * 0.8, -u_offset * 0.8);
                 float ink4 = printLayer(uv_offset3, 0.785, 0.99);
 
                 vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
-                // Mezcla substractiva 4-color
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
                 vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
