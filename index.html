@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riso Lab - Pro Export</title>
+    <title>Riso Lab - CMYK Edition</title>
     
     <!-- ADOBE FONTS: Reemplaza TU_ID_DE_PROYECTO -->
     <link rel="stylesheet" href="https://use.typekit.net/TU_ID_DE_PROYECTO.css">
@@ -38,7 +38,6 @@
             font-weight: 800;
         }
 
-        /* Panel UI Ultra Compacto */
         #ui-panel {
             position: absolute;
             top: 50%;
@@ -53,14 +52,29 @@
             overflow-y: hidden; 
         }
 
-        h1 {
-            font-size: 1.2rem; 
-            margin: 0 0 8px 0;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
             border-bottom: 2px dashed var(--border);
             padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: 1.1rem; 
+            margin: 0;
+            line-height: 1;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .reset-btn {
+            flex: none;
+            width: auto;
+            padding: 2px 6px;
+            font-size: 0.55rem;
+            margin: 0;
         }
 
         .control-group {
@@ -156,19 +170,22 @@
     <canvas id="glcanvas"></canvas>
 
     <div id="ui-panel">
-        <h1 class="ink-bleed-text">Riso Lab</h1>
+        <div class="header-row">
+            <h1 class="ink-bleed-text">Riso Lab</h1>
+            <button class="btn-action reset-btn" onclick="resetApp()">RESET</button>
+        </div>
         
         <div class="control-group">
             <label class="ink-bleed-text">Geometry (Inner / Outer)</label>
             <div class="color-row">
                 <select id="shape" class="ink-bleed-text" title="Shape 1 (Inner/Base)">
-                    <option value="9">Star</option>
                     <option value="0">Square</option>
                     <option value="1">Circle</option>
                     <option value="2">Flower</option>
                     <option value="3">Triangle</option>
                     <option value="4">Spiral</option>
                     <option value="5">Organic</option>
+                    <option value="9">Hyper Organic</option>
                     <option value="6">Glitch Bars</option>
                     <option value="7">Glitch Spheres</option>
                     <option value="8">Quad Glitch</option>
@@ -181,10 +198,10 @@
                     <option value="3">Triangle</option>
                     <option value="4">Spiral</option>
                     <option value="5">Organic</option>
+                    <option value="9">Hyper Organic</option>
                     <option value="6">Glitch Bars</option>
                     <option value="7">Glitch Spheres</option>
                     <option value="8">Quad Glitch</option>
-                    <option value="9">Star</option>
                 </select>
             </div>
             <select id="blend" class="ink-bleed-text" style="margin-top: 4px;">
@@ -192,6 +209,11 @@
                 <option value="1">Blend: Multiply (Moiré Wave)</option>
                 <option value="2">Blend: Hard Intersection</option>
             </select>
+        </div>
+
+        <div class="control-group">
+            <label class="ink-bleed-text" for="scale">Scale <span class="value-display" id="val-scale">1.00</span></label>
+            <input type="range" id="scale" min="0.2" max="3.0" step="0.1" value="1.0">
         </div>
 
         <div class="control-group">
@@ -215,11 +237,12 @@
         </div>
 
         <div class="control-group">
-            <label class="ink-bleed-text">Tri-Color Inks</label>
+            <label class="ink-bleed-text">Quad-Color Inks</label>
             <div class="color-row">
-                <input type="color" id="color1" value="#0033ff"> 
-                <input type="color" id="color2" value="#ff0044"> 
-                <input type="color" id="color3" value="#ffaa00"> 
+                <input type="color" id="color1" value="#00ccff" title="Cyan"> 
+                <input type="color" id="color2" value="#ff0066" title="Magenta"> 
+                <input type="color" id="color3" value="#ffe600" title="Yellow"> 
+                <input type="color" id="color4" value="#111111" title="Black"> 
             </div>
         </div>
 
@@ -237,8 +260,6 @@
                 <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
                 <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
-
-            <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
         </div>
     </div>
 
@@ -251,13 +272,15 @@
             shape: document.getElementById('shape'),
             shape2: document.getElementById('shape2'),
             blend: document.getElementById('blend'),
+            scale: document.getElementById('scale'),
             speed: document.getElementById('speed'),
             halftone: document.getElementById('halftone'),
             grain: document.getElementById('grain'),
             offset: document.getElementById('offset'),
             color1: document.getElementById('color1'),
             color2: document.getElementById('color2'),
-            color3: document.getElementById('color3')
+            color3: document.getElementById('color3'),
+            color4: document.getElementById('color4')
         };
 
         const updateLabel = (id, decimalPlaces) => {
@@ -269,22 +292,25 @@
                 });
             }
         };
+        updateLabel('scale', 2);
         updateLabel('speed', 2);
         updateLabel('halftone', 0);
         updateLabel('grain', 2);
         updateLabel('offset', 3);
 
         window.resetApp = function() {
-            inputs.shape.value = "9";      // Star
+            inputs.shape.value = "0";      // Square
             inputs.shape2.value = "-1";    // None
             inputs.blend.value = "0";      // Morph
+            inputs.scale.value = "1.0";
             inputs.speed.value = "2.0";
             inputs.halftone.value = "250";
             inputs.grain.value = "0.75";
             inputs.offset.value = "0";
-            inputs.color1.value = "#0033ff";
-            inputs.color2.value = "#ff0044";
-            inputs.color3.value = "#ffaa00";
+            inputs.color1.value = "#00ccff"; // Cyan
+            inputs.color2.value = "#ff0066"; // Magenta
+            inputs.color3.value = "#ffe600"; // Yellow
+            inputs.color4.value = "#111111"; // Black
             
             Object.values(inputs).forEach(input => {
                 if(input) input.dispatchEvent(new Event('input'));
@@ -304,7 +330,9 @@
             uniform vec3 u_color1;
             uniform vec3 u_color2;
             uniform vec3 u_color3;
+            uniform vec3 u_color4;
             uniform float u_speed;
+            uniform float u_scale;
             
             uniform int u_shape;
             uniform int u_shape2;
@@ -358,6 +386,16 @@
                     d = length(p) + 0.1 * sin(a * 3.0 + t * 2.0) + 0.05 * cos(a * 7.0 - t);
                     return sin(d * 20.0 - time * 4.0) * 0.5 + 0.5;
                 }
+                else if (type == 9) { 
+                    // HYPER ORGANIC (Chaos & Contrast)
+                    float t = time * 0.8;
+                    vec2 p = uv * 1.2;
+                    p += 0.15 * vec2(sin(t*1.5 + p.y*12.0), cos(t*1.2 + p.x*10.0));
+                    p += 0.1 * vec2(cos(t*2.0 + p.x*20.0), sin(t*1.8 + p.y*18.0));
+                    float a = atan(p.y, p.x);
+                    d = length(p) + 0.15 * sin(a * 5.0 + t * 4.0) + 0.1 * cos(a * 9.0 - t * 3.0);
+                    return sin(d * 30.0 - time * 6.0) * 0.5 + 0.5;
+                }
                 else if (type == 6) { 
                     float band = floor(uv.y * 8.0);
                     return sin(uv.x * 15.0 + time + random(vec2(band))*10.0) * 0.5 + 0.5;
@@ -374,11 +412,6 @@
                     else if (uv.x >= 0.0 && uv.y >= 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 - gt) * 0.5 + 0.5; } 
                     else if (uv.x < 0.0 && uv.y < 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 + gt) * 0.5 + 0.5; } 
                     else { band = floor(uv.x * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.y * 15.0 + gt) * 0.5 + 0.5; }
-                }
-                else if (type == 9) { 
-                    float angle = atan(uv.y, uv.x);
-                    d = length(uv) + cos(angle * 10.0) * 0.15;
-                    return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
                 return 0.0;
             }
@@ -417,23 +450,34 @@
             }
 
             void main() {
+                // Escalar coordenadas desde el centro
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+                uv /= u_scale;
                 
+                // Tinta 1 (Cian, 15 grados)
                 float ink1 = printLayer(uv, 0.261, 0.0); 
                 
+                // Tinta 2 (Magenta, 75 grados)
                 vec2 uv_offset1 = uv + vec2(u_offset, u_offset * 0.5);
-                float ink2 = printLayer(uv_offset1, 0.785, 0.33); 
+                float ink2 = printLayer(uv_offset1, 1.309, 0.33); 
                 
+                // Tinta 3 (Amarillo, 0 grados)
                 vec2 uv_offset2 = uv + vec2(-u_offset * 0.5, -u_offset);
-                float ink3 = printLayer(uv_offset2, 1.309, 0.66); 
+                float ink3 = printLayer(uv_offset2, 0.0, 0.66); 
                 
+                // Tinta 4 (Negro, 45 grados)
+                vec2 uv_offset3 = uv + vec2(u_offset * 0.8, -u_offset * 0.8);
+                float ink4 = printLayer(uv_offset3, 0.785, 0.99);
+
                 vec3 paper = vec3(0.96, 0.94, 0.90) - (random(uv) * (u_grain * 0.15)); 
                 
+                // Mezcla substractiva 4-color
                 vec3 layer1 = mix(vec3(1.0), u_color1, ink1);
                 vec3 layer2 = mix(vec3(1.0), u_color2, ink2);
                 vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
+                vec3 layer4 = mix(vec3(1.0), u_color4, ink4);
                 
-                vec3 finalColor = paper * layer1 * layer2 * layer3;
+                vec3 finalColor = paper * layer1 * layer2 * layer3 * layer4;
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -504,9 +548,11 @@
             const c1 = hexToRgb(inputs.color1.value);
             const c2 = hexToRgb(inputs.color2.value);
             const c3 = hexToRgb(inputs.color3.value);
+            const c4 = hexToRgb(inputs.color4.value);
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape2"), parseInt(inputs.shape2.value));
@@ -517,6 +563,7 @@
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color1"), c1[0], c1[1], c1[2]);
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color2"), c2[0], c2[1], c2[2]);
             tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color3"), c3[0], c3[1], c3[2]);
+            tGl.uniform3f(tGl.getUniformLocation(tProg, "u_color4"), c4[0], c4[1], c4[2]);
             
             tGl.drawArrays(tGl.TRIANGLES, 0, 6);
             
@@ -598,6 +645,7 @@
         function render() {
             const time = (performance.now() - startTime) / 1000;
             
+            const scale = parseFloat(inputs.scale.value);
             const speed = parseFloat(inputs.speed.value);
             const shape = parseInt(inputs.shape.value);
             const shape2 = parseInt(inputs.shape2.value);
@@ -608,10 +656,12 @@
             const c1 = hexToRgb(inputs.color1.value);
             const c2 = hexToRgb(inputs.color2.value);
             const c3 = hexToRgb(inputs.color3.value);
+            const c4 = hexToRgb(inputs.color4.value);
 
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
+            gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape2"), shape2);
@@ -622,12 +672,14 @@
             gl.uniform3f(gl.getUniformLocation(program, "u_color1"), c1[0], c1[1], c1[2]);
             gl.uniform3f(gl.getUniformLocation(program, "u_color2"), c2[0], c2[1], c2[2]);
             gl.uniform3f(gl.getUniformLocation(program, "u_color3"), c3[0], c3[1], c3[2]);
+            gl.uniform3f(gl.getUniformLocation(program, "u_color4"), c4[0], c4[1], c4[2]);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
 
             if (isRecording && recGl && recProg) {
                 recGl.useProgram(recProg);
                 recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape2"), shape2);
@@ -638,6 +690,7 @@
                 recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color1"), c1[0], c1[1], c1[2]);
                 recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color2"), c2[0], c2[1], c2[2]);
                 recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color3"), c3[0], c3[1], c3[2]);
+                recGl.uniform3f(recGl.getUniformLocation(recProg, "u_color4"), c4[0], c4[1], c4[2]);
                 recGl.drawArrays(recGl.TRIANGLES, 0, 6);
             }
 
