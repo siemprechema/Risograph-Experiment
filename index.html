@@ -167,11 +167,9 @@
                     <option value="3">Triangle</option>
                     <option value="4">Spiral</option>
                     <option value="5">Organic</option>
-                    <option value="9">Hyper Organic</option>
-                    <option value="6">Glitch Bars</option>
-                    <option value="7">Glitch Spheres</option>
-                    <option value="8">Quad Glitch</option>
-                    <option value="10">Stepped Hourglass</option>
+                    <option value="8">Hyper Organic</option>
+                    <option value="6">Stepped Hourglass</option>
+                    <option value="7">Stepped Vertical</option>
                 </select>
                 <select id="shape2" class="ink-bleed-text" title="Shape 2 (Outer/Mix)">
                     <option value="-1">None</option>
@@ -181,11 +179,9 @@
                     <option value="3">Triangle</option>
                     <option value="4">Spiral</option>
                     <option value="5">Organic</option>
-                    <option value="9">Hyper Organic</option>
-                    <option value="6">Glitch Bars</option>
-                    <option value="7">Glitch Spheres</option>
-                    <option value="8">Quad Glitch</option>
-                    <option value="10">Stepped Hourglass</option>
+                    <option value="8">Hyper Organic</option>
+                    <option value="6">Stepped Hourglass</option>
+                    <option value="7">Stepped Vertical</option>
                 </select>
             </div>
             <select id="blend" class="ink-bleed-text" style="margin-top: 4px;">
@@ -236,18 +232,18 @@
         </div>
 
         <div class="export-section">
-            <div class="export-title ink-bleed-text">EXPORT</div>
+            <div class="export-title ink-bleed-text">EXPORT (4K)</div>
             <div class="actions-row">
-                <button class="btn-action" onclick="exportMedia(1920, 1080)">16:9</button>
-                <button class="btn-action" onclick="exportMedia(1080, 1920)">9:16</button>
-                <button class="btn-action" onclick="exportMedia(1080, 1440)">3:4</button>
+                <button class="btn-action" onclick="exportMedia(3840, 2160)">16:9</button>
+                <button class="btn-action" onclick="exportMedia(2160, 3840)">9:16</button>
+                <button class="btn-action" onclick="exportMedia(2160, 2880)">3:4</button>
             </div>
             
-            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD</div>
+            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD (4K 50Mbps)</div>
             <div class="actions-row">
-                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(1920, 1080, this)">16:9</button>
-                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
-                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
+                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(3840, 2160, this)">16:9</button>
+                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(2160, 3840, this)">9:16</button>
+                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(2160, 2880, this)">3:4</button>
             </div>
 
             <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
@@ -258,6 +254,19 @@
         const canvas = document.getElementById('glcanvas');
         const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
+
+        let mouseX = 0.0;
+        let mouseY = 0.0;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            mouseX = (e.touches[0].clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.touches[0].clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        }, {passive: true});
 
         const inputs = {
             shape: document.getElementById('shape'),
@@ -300,7 +309,7 @@
             inputs.halftone.value = "250";
             inputs.grain.value = "0.75";
             inputs.offset.value = "0";
-            inputs.jitter.value = "0";
+            inputs.jitter.value = "0.0";
             inputs.color1.value = "#00ccff"; 
             inputs.color2.value = "#ff0066"; 
             inputs.color3.value = "#ffe600"; 
@@ -336,6 +345,8 @@
             uniform float u_grain;
             uniform float u_offset;
             uniform float u_jitter;
+            
+            uniform vec2 u_mouse;
 
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
@@ -381,7 +392,7 @@
                     d = length(p) + 0.1 * sin(a * 3.0 + t * 2.0) + 0.05 * cos(a * 7.0 - t);
                     return sin(d * 20.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else if (type == 9) { 
+                else if (type == 8) { 
                     float t = time * 0.8;
                     vec2 p = uv * 1.2;
                     p += 0.15 * vec2(sin(t*1.5 + p.y*12.0), cos(t*1.2 + p.x*10.0));
@@ -390,31 +401,19 @@
                     d = length(p) + 0.15 * sin(a * 5.0 + t * 4.0) + 0.1 * cos(a * 9.0 - t * 3.0);
                     return sin(d * 30.0 - time * 6.0) * 0.5 + 0.5;
                 }
-                else if (type == 10) { 
-                    // STEPPED HOURGLASS (Geometría Arquitectónica)
+                else if (type == 6) { 
+                    // STEPPED HOURGLASS (Horizontal)
                     float steps = 10.0;
-                    // Valor absoluto en Y para garantizar simetría en el centro, y escalonamiento duro
                     float stY = floor(abs(uv.y) * steps) / steps;
-                    // La distancia X se reduce basándose en la terraza Y, creando un reloj de arena escalonado
                     d = abs(uv.x) - stY * 0.6;
                     return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
-                else if (type == 6) { 
-                    float band = floor(uv.y * 8.0);
-                    float gt = time + random(vec2(band)) * 10.0;
-                    return sin(abs(uv.x) * 15.0 - gt) * 0.5 + 0.5;
-                }
                 else if (type == 7) { 
-                    float band = floor(uv.y * 8.0);
-                    float gt = time * 4.0 + random(vec2(band)) * 10.0;
-                    return sin(length(uv) * 25.0 - gt) * 0.5 + 0.5;
-                }
-                else if (type == 8) { 
-                    float band; float gt;
-                    if (uv.x < 0.0 && uv.y >= 0.0) { band = floor(uv.x * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.y * 15.0 - gt) * 0.5 + 0.5; } 
-                    else if (uv.x >= 0.0 && uv.y >= 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 - gt) * 0.5 + 0.5; } 
-                    else if (uv.x < 0.0 && uv.y < 0.0) { band = floor(uv.y * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.x * 15.0 + gt) * 0.5 + 0.5; } 
-                    else { band = floor(uv.x * 8.0); gt = time + random(vec2(band)) * 10.0; return sin(uv.y * 15.0 + gt) * 0.5 + 0.5; }
+                    // STEPPED VERTICAL (Pilares)
+                    float steps = 10.0;
+                    float stX = floor(abs(uv.x) * steps) / steps;
+                    d = abs(uv.y) - stX * 0.6;
+                    return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
                 }
                 return 0.0;
             }
@@ -454,9 +453,13 @@
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-                uv /= u_scale;
+                uv /= max(u_scale, 0.1);
                 
-                // JITTER MECÁNICO: Vibración caótica controlada por el usuario
+                vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
+                float mouseDist = length(mouseDelta);
+                float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.078;
+                uv -= mouseDelta * pulse;
+                
                 float jT = u_time * 35.0; 
                 vec2 j1 = vec2(sin(jT), cos(jT * 0.8)) * u_jitter * 0.015;
                 vec2 j2 = vec2(cos(jT * 1.1 + 1.0), sin(jT * 0.9 + 2.0)) * u_jitter * 0.015;
@@ -481,7 +484,14 @@
                 vec3 layer3 = mix(vec3(1.0), u_color3, ink3);
                 vec3 layer4 = mix(vec3(1.0), u_color4, ink4);
                 
-                vec3 finalColor = paper * layer1 * layer2 * layer3 * layer4;
+                vec3 multiplyBlend = layer1 * layer2 * layer3 * layer4;
+                
+                // FUSIÓN MULTIPLICATIVA REAL (Ink Density)
+                // Aumenta la intensidad y oscuridad en las zonas donde las tintas se acumulan
+                float totalInk = ink1 + ink2 + ink3 + ink4;
+                vec3 densityBlend = mix(multiplyBlend, multiplyBlend * multiplyBlend, clamp(totalInk * 0.4, 0.0, 1.0));
+
+                vec3 finalColor = paper * densityBlend;
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -556,6 +566,7 @@
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
+            tGl.uniform2f(tGl.getUniformLocation(tProg, "u_mouse"), mouseX, mouseY);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
@@ -622,7 +633,7 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 25000000 });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 50000000 });
                 recordedChunks = [];
                 mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = function() {
@@ -667,6 +678,7 @@
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
+            gl.uniform2f(gl.getUniformLocation(program, "u_mouse"), mouseX, mouseY);
             gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
@@ -686,6 +698,7 @@
                 recGl.useProgram(recProg);
                 recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
+                recGl.uniform2f(recGl.getUniformLocation(recProg, "u_mouse"), mouseX, mouseY);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
