@@ -487,9 +487,9 @@
                 vec3 multiplyBlend = layer1 * layer2 * layer3 * layer4;
                 
                 // FUSIÓN MULTIPLICATIVA REAL (Ink Density)
-                // Aumenta la intensidad y oscuridad en las zonas donde las tintas se acumulan
+                // Aumentado un 20% (de 0.4 a 0.48) para colores aún más densos y oscuros
                 float totalInk = ink1 + ink2 + ink3 + ink4;
-                vec3 densityBlend = mix(multiplyBlend, multiplyBlend * multiplyBlend, clamp(totalInk * 0.4, 0.0, 1.0));
+                vec3 densityBlend = mix(multiplyBlend, multiplyBlend * multiplyBlend, clamp(totalInk * 0.48, 0.0, 1.0));
 
                 vec3 finalColor = paper * densityBlend;
 
