@@ -202,6 +202,12 @@
             <label class="ink-bleed-text" for="speed">Speed <span class="value-display" id="val-speed">2.00</span></label>
             <input type="range" id="speed" min="0.0" max="4.0" step="0.1" value="2.0">
         </div>
+        
+        <!-- NUEVO CONTROL: POSTERIZE -->
+        <div class="control-group">
+            <label class="ink-bleed-text" for="posterize">Posterize Steps <span class="value-display" id="val-posterize">6</span></label>
+            <input type="range" id="posterize" min="0" max="30" step="1" value="6">
+        </div>
 
         <div class="control-group">
             <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">250</span></label>
@@ -229,23 +235,20 @@
         </div>
 
         <div class="export-section">
-            <div class="export-title ink-bleed-text">EXPORT (4K)</div>
+            <div class="export-title ink-bleed-text">EXPORT</div>
             <div class="actions-row">
-                <!-- Se duplican las resoluciones a 4K internamente (Super-Sampling) -->
-                <button class="btn-action" onclick="exportMedia(3840, 2160)">16:9</button>
-                <button class="btn-action" onclick="exportMedia(2160, 3840)">9:16</button>
-                <button class="btn-action" onclick="exportMedia(2160, 2880)">3:4</button>
+                <button class="btn-action" onclick="exportMedia(1920, 1080)">16:9</button>
+                <button class="btn-action" onclick="exportMedia(1080, 1920)">9:16</button>
+                <button class="btn-action" onclick="exportMedia(1080, 1440)">3:4</button>
             </div>
             
-            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD (4K 50Mbps)</div>
+            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD</div>
             <div class="actions-row">
-                <!-- Se duplican las resoluciones a 4K internamente (Super-Sampling) -->
-                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(3840, 2160, this)">16:9</button>
-                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(2160, 3840, this)">9:16</button>
-                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(2160, 2880, this)">3:4</button>
+                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(1920, 1080, this)">16:9</button>
+                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
+                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
             </div>
 
-            <!-- Botón de Reset al final de la UI -->
             <button class="btn-action btn-reset" onclick="resetApp()">RESET</button>
         </div>
     </div>
@@ -255,26 +258,13 @@
         const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
 
-        // Variables de interacción con el Mouse/Touch
-        let mouseX = 0.0;
-        let mouseY = 0.0;
-
-        window.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
-            mouseY = -(e.clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
-        });
-
-        window.addEventListener('touchmove', (e) => {
-            mouseX = (e.touches[0].clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
-            mouseY = -(e.touches[0].clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
-        }, {passive: true});
-
         const inputs = {
             shape: document.getElementById('shape'),
             shape2: document.getElementById('shape2'),
             blend: document.getElementById('blend'),
             scale: document.getElementById('scale'),
             speed: document.getElementById('speed'),
+            posterize: document.getElementById('posterize'),
             halftone: document.getElementById('halftone'),
             grain: document.getElementById('grain'),
             offset: document.getElementById('offset'),
@@ -295,6 +285,7 @@
         };
         updateLabel('scale', 2);
         updateLabel('speed', 2);
+        updateLabel('posterize', 0);
         updateLabel('halftone', 0);
         updateLabel('grain', 2);
         updateLabel('offset', 3);
@@ -305,6 +296,7 @@
             inputs.blend.value = "0";      // Morph
             inputs.scale.value = "1.0";
             inputs.speed.value = "2.0";
+            inputs.posterize.value = "6";
             inputs.halftone.value = "250";
             inputs.grain.value = "0.75";
             inputs.offset.value = "0";
@@ -339,11 +331,10 @@
             uniform int u_shape2;
             uniform int u_blend;
             
+            uniform float u_posterize;
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
-            
-            uniform vec2 u_mouse;
 
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
@@ -439,8 +430,13 @@
 
             float printLayer(vec2 uv, float angleOffset, float timeOffset) {
                 float intensity = getShapeIntensity(uv, timeOffset);
-                vec2 st = gl_FragCoord.xy / u_resolution.y;
                 
+                // APLICAR POSTERIZACIÓN SI ESTÁ ACTIVADO
+                if (u_posterize > 0.5) {
+                    intensity = floor(intensity * u_posterize) / u_posterize;
+                }
+
+                vec2 st = gl_FragCoord.xy / u_resolution.y;
                 st += uv * intensity * 0.08; 
                 
                 vec2 rotST = rotate(st, angleOffset); 
@@ -453,12 +449,7 @@
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-                uv /= max(u_scale, 0.1);
-                
-                vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
-                float mouseDist = length(mouseDelta);
-                float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.078;
-                uv -= mouseDelta * pulse;
+                uv /= u_scale;
                 
                 float ink1 = printLayer(uv, 0.261, 0.0); 
                 
@@ -553,9 +544,9 @@
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
-            tGl.uniform2f(tGl.getUniformLocation(tProg, "u_mouse"), mouseX, mouseY);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
+            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_posterize"), parseFloat(inputs.posterize.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape2"), parseInt(inputs.shape2.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_blend"), parseInt(inputs.blend.value));
@@ -619,8 +610,7 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                // BITRATE INCREMENTADO A 50 Mbps para retener la textura al 100% en H.264/VP9
-                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 50000000 });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 25000000 });
                 recordedChunks = [];
                 mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = function() {
@@ -650,6 +640,7 @@
             
             const scale = parseFloat(inputs.scale.value);
             const speed = parseFloat(inputs.speed.value);
+            const posterize = parseFloat(inputs.posterize.value);
             const shape = parseInt(inputs.shape.value);
             const shape2 = parseInt(inputs.shape2.value);
             const blend = parseInt(inputs.blend.value);
@@ -664,9 +655,9 @@
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
-            gl.uniform2f(gl.getUniformLocation(program, "u_mouse"), mouseX, mouseY);
             gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
+            gl.uniform1f(gl.getUniformLocation(program, "u_posterize"), posterize);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape2"), shape2);
             gl.uniform1i(gl.getUniformLocation(program, "u_blend"), blend);
@@ -683,9 +674,9 @@
                 recGl.useProgram(recProg);
                 recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
-                recGl.uniform2f(recGl.getUniformLocation(recProg, "u_mouse"), mouseX, mouseY);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
+                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_posterize"), posterize);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape2"), shape2);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_blend"), blend);
