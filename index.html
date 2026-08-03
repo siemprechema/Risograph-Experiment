@@ -453,11 +453,10 @@
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 uv /= max(u_scale, 0.1);
                 
-                // EFECTO DE PULSO INTERACTIVO
+                // EFECTO DE PULSO INTERACTIVO AUMENTADO 30% (0.06 -> 0.078)
                 vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
                 float mouseDist = length(mouseDelta);
-                // Oscilación de pulso que fluye del cursor y se difumina con la distancia
-                float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.06;
+                float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.078;
                 uv -= mouseDelta * pulse;
                 
                 float ink1 = printLayer(uv, 0.261, 0.0); 
