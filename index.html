@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Viewport bloqueado para evitar zoom al deslizar los controles en móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Riso Lab - CMYK Edition</title>
     
     <!-- ADOBE FONTS: Reemplaza TU_ID_DE_PROYECTO -->
@@ -38,18 +39,49 @@
             font-weight: 800;
         }
 
+        /* Botón Toggle del Menú */
+        #ui-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: var(--paper-bg);
+            border: 2px solid var(--ink-black);
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 0.65rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        #ui-toggle:hover {
+            background: var(--ink-black);
+            color: var(--paper-bg);
+        }
+
+        /* Panel UI Responsivo */
         #ui-panel {
             position: absolute;
             top: 50%;
             left: 20px;
-            transform: translateY(-50%);
+            transform: translate(0, -50%);
             background: var(--paper-bg);
             padding: 12px;
             width: 250px; 
             border: 2px solid var(--ink-black);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
             max-height: 95vh;
-            overflow-y: hidden; 
+            overflow-y: auto; 
+            z-index: 90;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        #ui-panel.hidden {
+            transform: translate(-150%, -50%);
+            opacity: 0;
+            pointer-events: none;
         }
 
         h1 {
@@ -138,6 +170,20 @@
         }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* REGLAS PARA MÓVILES (Adaptación Responsiva) */
+        @media (max-width: 600px) {
+            #ui-panel {
+                top: 60px;
+                transform: translate(0, 0);
+                width: calc(100% - 40px);
+                max-width: 320px;
+                max-height: calc(100vh - 80px);
+            }
+            #ui-panel.hidden {
+                transform: translate(-150%, 0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -151,6 +197,8 @@
             <feBlend in="SourceGraphic" in2="texturedInk" mode="multiply" />
         </filter>
     </svg>
+
+    <button id="ui-toggle" class="ink-bleed-text">⚙ HIDE MENU</button>
 
     <canvas id="glcanvas"></canvas>
 
@@ -254,6 +302,22 @@
         const canvas = document.getElementById('glcanvas');
         const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
+
+        // Lógica del Botón Menú Responsivo
+        const uiPanel = document.getElementById('ui-panel');
+        const uiToggle = document.getElementById('ui-toggle');
+        let menuVisible = true;
+        
+        uiToggle.addEventListener('click', () => {
+            menuVisible = !menuVisible;
+            if (menuVisible) {
+                uiPanel.classList.remove('hidden');
+                uiToggle.innerText = '⚙ HIDE MENU';
+            } else {
+                uiPanel.classList.add('hidden');
+                uiToggle.innerText = '⚙ SHOW MENU';
+            }
+        });
 
         let mouseX = 0.0;
         let mouseY = 0.0;
@@ -486,8 +550,6 @@
                 
                 vec3 multiplyBlend = layer1 * layer2 * layer3 * layer4;
                 
-                // FUSIÓN MULTIPLICATIVA REAL (Ink Density)
-                // Aumentado un 20% (de 0.4 a 0.48) para colores aún más densos y oscuros
                 float totalInk = ink1 + ink2 + ink3 + ink4;
                 vec3 densityBlend = mix(multiplyBlend, multiplyBlend * multiplyBlend, clamp(totalInk * 0.48, 0.0, 1.0));
 
