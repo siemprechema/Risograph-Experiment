@@ -171,6 +171,7 @@
                     <option value="6">Glitch Bars</option>
                     <option value="7">Glitch Spheres</option>
                     <option value="8">Quad Glitch</option>
+                    <option value="10">Stepped Hourglass</option>
                 </select>
                 <select id="shape2" class="ink-bleed-text" title="Shape 2 (Outer/Mix)">
                     <option value="-1">None</option>
@@ -184,6 +185,7 @@
                     <option value="6">Glitch Bars</option>
                     <option value="7">Glitch Spheres</option>
                     <option value="8">Quad Glitch</option>
+                    <option value="10">Stepped Hourglass</option>
                 </select>
             </div>
             <select id="blend" class="ink-bleed-text" style="margin-top: 4px;">
@@ -202,11 +204,6 @@
             <label class="ink-bleed-text" for="speed">Speed <span class="value-display" id="val-speed">2.00</span></label>
             <input type="range" id="speed" min="0.0" max="4.0" step="0.1" value="2.0">
         </div>
-        
-        <div class="control-group">
-            <label class="ink-bleed-text" for="posterize">Posterize <span class="value-display" id="val-posterize">6</span></label>
-            <input type="range" id="posterize" min="0" max="30" step="1" value="6">
-        </div>
 
         <div class="control-group">
             <label class="ink-bleed-text" for="halftone">Halftone <span class="value-display" id="val-halftone">250</span></label>
@@ -223,10 +220,9 @@
             <input type="range" id="offset" min="0.0" max="0.15" step="0.005" value="0">
         </div>
 
-        <!-- NUEVO CONTROL: JITTER -->
         <div class="control-group">
-            <label class="ink-bleed-text" for="jitter">Jitter <span class="value-display" id="val-jitter">0.50</span></label>
-            <input type="range" id="jitter" min="0.0" max="1.0" step="0.05" value="0.5">
+            <label class="ink-bleed-text" for="jitter">Jitter <span class="value-display" id="val-jitter">0.00</span></label>
+            <input type="range" id="jitter" min="0.0" max="1.0" step="0.05" value="0.0">
         </div>
 
         <div class="control-group">
@@ -269,7 +265,6 @@
             blend: document.getElementById('blend'),
             scale: document.getElementById('scale'),
             speed: document.getElementById('speed'),
-            posterize: document.getElementById('posterize'),
             halftone: document.getElementById('halftone'),
             grain: document.getElementById('grain'),
             offset: document.getElementById('offset'),
@@ -291,7 +286,6 @@
         };
         updateLabel('scale', 2);
         updateLabel('speed', 2);
-        updateLabel('posterize', 0);
         updateLabel('halftone', 0);
         updateLabel('grain', 2);
         updateLabel('offset', 3);
@@ -303,11 +297,10 @@
             inputs.blend.value = "0";      
             inputs.scale.value = "1.0";
             inputs.speed.value = "2.0";
-            inputs.posterize.value = "6";
             inputs.halftone.value = "250";
             inputs.grain.value = "0.75";
             inputs.offset.value = "0";
-            inputs.jitter.value = "0.5";
+            inputs.jitter.value = "0";
             inputs.color1.value = "#00ccff"; 
             inputs.color2.value = "#ff0066"; 
             inputs.color3.value = "#ffe600"; 
@@ -339,7 +332,6 @@
             uniform int u_shape2;
             uniform int u_blend;
             
-            uniform float u_posterize;
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
@@ -398,6 +390,15 @@
                     d = length(p) + 0.15 * sin(a * 5.0 + t * 4.0) + 0.1 * cos(a * 9.0 - t * 3.0);
                     return sin(d * 30.0 - time * 6.0) * 0.5 + 0.5;
                 }
+                else if (type == 10) { 
+                    // STEPPED HOURGLASS (Geometría Arquitectónica)
+                    float steps = 10.0;
+                    // Valor absoluto en Y para garantizar simetría en el centro, y escalonamiento duro
+                    float stY = floor(abs(uv.y) * steps) / steps;
+                    // La distancia X se reduce basándose en la terraza Y, creando un reloj de arena escalonado
+                    d = abs(uv.x) - stY * 0.6;
+                    return sin(d * 25.0 - time * 4.0) * 0.5 + 0.5;
+                }
                 else if (type == 6) { 
                     float band = floor(uv.y * 8.0);
                     float gt = time + random(vec2(band)) * 10.0;
@@ -439,12 +440,8 @@
 
             float printLayer(vec2 uv, float angleOffset, float timeOffset) {
                 float intensity = getShapeIntensity(uv, timeOffset);
-                
-                if (u_posterize > 0.5) {
-                    intensity = floor(intensity * u_posterize) / u_posterize;
-                }
-
                 vec2 st = gl_FragCoord.xy / u_resolution.y;
+                
                 st += uv * intensity * 0.08; 
                 
                 vec2 rotST = rotate(st, angleOffset); 
@@ -459,8 +456,8 @@
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 uv /= u_scale;
                 
-                // JITTER MECÁNICO: Vibración caótica de los tambores de impresión
-                float jT = u_time * 35.0; // Alta frecuencia para simular motor
+                // JITTER MECÁNICO: Vibración caótica controlada por el usuario
+                float jT = u_time * 35.0; 
                 vec2 j1 = vec2(sin(jT), cos(jT * 0.8)) * u_jitter * 0.015;
                 vec2 j2 = vec2(cos(jT * 1.1 + 1.0), sin(jT * 0.9 + 2.0)) * u_jitter * 0.015;
                 vec2 j3 = vec2(sin(jT * 0.85 + 3.0), cos(jT * 1.2 + 4.0)) * u_jitter * 0.015;
@@ -561,7 +558,6 @@
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
-            tGl.uniform1f(tGl.getUniformLocation(tProg, "u_posterize"), parseFloat(inputs.posterize.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape2"), parseInt(inputs.shape2.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_blend"), parseInt(inputs.blend.value));
@@ -656,7 +652,6 @@
             
             const scale = parseFloat(inputs.scale.value);
             const speed = parseFloat(inputs.speed.value);
-            const posterize = parseFloat(inputs.posterize.value);
             const shape = parseInt(inputs.shape.value);
             const shape2 = parseInt(inputs.shape2.value);
             const blend = parseInt(inputs.blend.value);
@@ -674,7 +669,6 @@
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
             gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
-            gl.uniform1f(gl.getUniformLocation(program, "u_posterize"), posterize);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape2"), shape2);
             gl.uniform1i(gl.getUniformLocation(program, "u_blend"), blend);
@@ -694,7 +688,6 @@
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
-                recGl.uniform1f(recGl.getUniformLocation(recProg, "u_posterize"), posterize);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape2"), shape2);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_blend"), blend);
