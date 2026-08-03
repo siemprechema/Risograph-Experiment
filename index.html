@@ -382,7 +382,8 @@
                 }
                 else if (type == 6) { 
                     float band = floor(uv.y * 8.0);
-                    return sin(uv.x * 15.0 + time + random(vec2(band))*10.0) * 0.5 + 0.5;
+                    float gt = time + random(vec2(band)) * 10.0;
+                    return sin(abs(uv.x) * 15.0 - gt) * 0.5 + 0.5;
                 }
                 else if (type == 7) { 
                     float band = floor(uv.y * 8.0);
