@@ -387,9 +387,8 @@
                 }
                 else if (type == 7) { 
                     float band = floor(uv.y * 8.0);
-                    float shift = (random(vec2(band)) - 0.5) * 0.5;
-                    vec2 gUv = uv + vec2(shift * sin(time * 2.0 + band), 0.0);
-                    return sin(length(gUv) * 25.0 - time * 4.0) * 0.5 + 0.5;
+                    float gt = time * 4.0 + random(vec2(band)) * 10.0;
+                    return sin(length(uv) * 25.0 - gt) * 0.5 + 0.5;
                 }
                 else if (type == 8) { 
                     float band; float gt;
