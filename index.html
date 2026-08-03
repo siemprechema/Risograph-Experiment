@@ -229,18 +229,20 @@
         </div>
 
         <div class="export-section">
-            <div class="export-title ink-bleed-text">EXPORT</div>
+            <div class="export-title ink-bleed-text">EXPORT (4K)</div>
             <div class="actions-row">
-                <button class="btn-action" onclick="exportMedia(1920, 1080)">16:9</button>
-                <button class="btn-action" onclick="exportMedia(1080, 1920)">9:16</button>
-                <button class="btn-action" onclick="exportMedia(1080, 1440)">3:4</button>
+                <!-- Se duplican las resoluciones a 4K internamente (Super-Sampling) -->
+                <button class="btn-action" onclick="exportMedia(3840, 2160)">16:9</button>
+                <button class="btn-action" onclick="exportMedia(2160, 3840)">9:16</button>
+                <button class="btn-action" onclick="exportMedia(2160, 2880)">3:4</button>
             </div>
             
-            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD</div>
+            <div class="export-title ink-bleed-text" style="margin-top: 8px;">RECORD (4K 50Mbps)</div>
             <div class="actions-row">
-                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(1920, 1080, this)">16:9</button>
-                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(1080, 1920, this)">9:16</button>
-                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(1080, 1440, this)">3:4</button>
+                <!-- Se duplican las resoluciones a 4K internamente (Super-Sampling) -->
+                <button class="btn-action" id="btn-rec-169" onclick="toggleRecord(3840, 2160, this)">16:9</button>
+                <button class="btn-action" id="btn-rec-916" onclick="toggleRecord(2160, 3840, this)">9:16</button>
+                <button class="btn-action" id="btn-rec-34" onclick="toggleRecord(2160, 2880, this)">3:4</button>
             </div>
 
             <!-- Botón de Reset al final de la UI -->
@@ -453,7 +455,6 @@
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
                 uv /= max(u_scale, 0.1);
                 
-                // EFECTO DE PULSO INTERACTIVO AUMENTADO 30% (0.06 -> 0.078)
                 vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
                 float mouseDist = length(mouseDelta);
                 float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.078;
@@ -618,7 +619,8 @@
                 if(!mimeType) mimeType = 'video/webm'; 
                 let ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
                 
-                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 25000000 });
+                // BITRATE INCREMENTADO A 50 Mbps para retener la textura al 100% en H.264/VP9
+                mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType, videoBitsPerSecond: 50000000 });
                 recordedChunks = [];
                 mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = function() {
