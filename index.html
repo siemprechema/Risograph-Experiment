@@ -253,6 +253,20 @@
         const glOptions = { preserveDrawingBuffer: true, antialias: false, depth: false };
         const gl = canvas.getContext('webgl', glOptions) || canvas.getContext('experimental-webgl', glOptions);
 
+        // Variables de interacción con el Mouse/Touch
+        let mouseX = 0.0;
+        let mouseY = 0.0;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            mouseX = (e.touches[0].clientX - window.innerWidth * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+            mouseY = -(e.touches[0].clientY - window.innerHeight * 0.5) / Math.min(window.innerWidth, window.innerHeight);
+        }, {passive: true});
+
         const inputs = {
             shape: document.getElementById('shape'),
             shape2: document.getElementById('shape2'),
@@ -326,6 +340,8 @@
             uniform float u_halftone_scale;
             uniform float u_grain;
             uniform float u_offset;
+            
+            uniform vec2 u_mouse;
 
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
@@ -435,7 +451,14 @@
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-                uv /= u_scale;
+                uv /= max(u_scale, 0.1);
+                
+                // EFECTO DE PULSO INTERACTIVO
+                vec2 mouseDelta = uv - (u_mouse / max(u_scale, 0.1));
+                float mouseDist = length(mouseDelta);
+                // Oscilación de pulso que fluye del cursor y se difumina con la distancia
+                float pulse = sin(u_time * 6.0 - mouseDist * 15.0) * exp(-mouseDist * 5.0) * 0.06;
+                uv -= mouseDelta * pulse;
                 
                 float ink1 = printLayer(uv, 0.261, 0.0); 
                 
@@ -530,6 +553,7 @@
 
             tGl.uniform2f(tGl.getUniformLocation(tProg, "u_resolution"), w, h);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_time"), time);
+            tGl.uniform2f(tGl.getUniformLocation(tProg, "u_mouse"), mouseX, mouseY);
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_scale"), parseFloat(inputs.scale.value));
             tGl.uniform1f(tGl.getUniformLocation(tProg, "u_speed"), parseFloat(inputs.speed.value));
             tGl.uniform1i(tGl.getUniformLocation(tProg, "u_shape"), parseInt(inputs.shape.value));
@@ -639,6 +663,7 @@
             gl.useProgram(program);
             gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), canvas.width, canvas.height);
             gl.uniform1f(gl.getUniformLocation(program, "u_time"), time);
+            gl.uniform2f(gl.getUniformLocation(program, "u_mouse"), mouseX, mouseY);
             gl.uniform1f(gl.getUniformLocation(program, "u_scale"), scale);
             gl.uniform1f(gl.getUniformLocation(program, "u_speed"), speed);
             gl.uniform1i(gl.getUniformLocation(program, "u_shape"), shape);
@@ -657,6 +682,7 @@
                 recGl.useProgram(recProg);
                 recGl.uniform2f(recGl.getUniformLocation(recProg, "u_resolution"), recWidth, recHeight);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_time"), time);
+                recGl.uniform2f(recGl.getUniformLocation(recProg, "u_mouse"), mouseX, mouseY);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_scale"), scale);
                 recGl.uniform1f(recGl.getUniformLocation(recProg, "u_speed"), speed);
                 recGl.uniform1i(recGl.getUniformLocation(recProg, "u_shape"), shape);
